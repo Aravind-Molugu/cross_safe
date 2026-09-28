@@ -14,3 +14,7 @@ scratch/
 ToDoList.txt
 ToDo_spec.md
 
+# Dependencies & Test Artifacts
+node_modules/
+npm-debug.log*
+.coverage/

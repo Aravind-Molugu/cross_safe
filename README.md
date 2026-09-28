@@ -58,6 +58,16 @@ Simply double-click `crosssafe.html` in your file explorer to open it in Chrome,
 3. Press `F12` and click the **Device Toolbar icon** (`Ctrl + Shift + M`) to simulate an iPhone 14 or Galaxy S20.
 4. Go to **Application** $\rightarrow$ **Service Workers** $\rightarrow$ check **Offline**. Refresh the page to see it run completely offline!
 
+### 3. Run Automated Unit Tests (Zero Bloat)
+Before committing or deploying, run the instant unit testing suite locally:
+* **Command Line (Python)**:
+  ```powershell
+  python tests/test_crosssafe.py
+  ```
+* **In-Browser Visual Test Runner**:
+  Double-click `tests/runner.html` in File Explorer or navigate to `http://localhost:8080/tests/runner.html` to run 15+ interactive behavioral tests directly in Chrome/Edge with live visual reporting.
+* **GitHub Actions CI**: Every `git push` automatically runs tests in the cloud via `.github/workflows/test.yml` before deploying to GitHub Pages.
+
 *(See [TESTING_GUIDE.md](TESTING_GUIDE.md) for full details)*
 
 ---

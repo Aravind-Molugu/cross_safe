@@ -89,6 +89,34 @@ http://<YOUR_LAPTOP_IP>:8080
 
 ---
 
+## Method 4: Automated Unit Testing Suite (Zero-Bloat "Shift-Left")
+
+Run automated regression and unit tests locally in milliseconds before committing to Git to ensure that GitHub Actions CI will pass without failure.
+
+### 1. Python Unit Test Suite (Instant, Zero Dependencies)
+Run the test suite directly from your PowerShell terminal using Python's built-in `unittest` runner:
+```powershell
+python tests/test_crosssafe.py
+```
+- **Execution time**: ~15 ms.
+- **Coverage**: Service Worker cache definitions, manifest icons, standalone `crosssafe.html` parity, DOM IDs in `app.js` vs `index.html`, speed multipliers, and CSS animation keyframes.
+
+### 2. In-Browser Visual Unit Test Runner (Zero Web Server)
+Open `tests/runner.html` directly in any web browser (Chrome, Edge, Firefox, Safari):
+- **Windows File Explorer**: Double-click `tests/runner.html`
+- **Or open in browser**: `file:///C:/Users/moluguaravind/road_cross_assist/tests/runner.html`
+- **Coverage**: Executes live browser JavaScript unit tests testing strobe sequences, speeds, character count clamping, SOS overrides, orientation states, and triple-tap counter logic with clear green checkmarks.
+
+### 3. Node.js Native Test Suite (For CI & Node Environments)
+If Node.js (v18+) is installed:
+```powershell
+npm test
+# or: node --test tests/unit.test.js
+```
+- Uses Node.js's native `node:test` and `node:assert` modules without requiring any third-party `node_modules` downloads.
+
+---
+
 ## Verification Checklist
 
 | Test Item | Expected Result | Pass? |
@@ -109,3 +137,5 @@ http://<YOUR_LAPTOP_IP>:8080
 | **Keyboard Shortcut** | Pressing **Spacebar** or **Esc** stops flashing on laptop | [ ] |
 | **In-App Orientation Toggle** | Tapping the orientation icon in the header toggles between Portrait and Landscape states; persists in localStorage; switches icon and activates cyan glow in Landscape mode; forces wide-angle landscape strobe without OS rotation lock | [ ] |
 | **Animated Pattern Previews** | Selector tiles display live CSS keyframe micro-animations: Police Strobe quad-flashes red then blue; Split Alternating flashes left-red then right-blue with divider; Full Screen Flip alternates solid colors; Wig-Wag alternates circular beacons | [ ] |
+| **Automated Unit Tests** | `python tests/test_crosssafe.py` and `tests/runner.html` pass with 100% success rate and zero failures | [ ] |
+

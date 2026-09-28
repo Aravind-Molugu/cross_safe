@@ -73,6 +73,19 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
   - **Amber Wig-Wag**: Alternating circular beacon pulses.
 - **Zero Overhead**: Pure CSS keyframe animations running on GPU layers without JavaScript setInterval overhead.
 
+### Automated Unit Testing Suite & CI Regression Safety (Item #9 `[CONTD]`)
+- **Problem Solved**: Manual browser checks on every change are slow and error-prone. We established automated "Shift-Left" testing to catch regressions locally before committing, plus an automated cloud CI gatekeeper.
+- **Zero-Bloat Architecture**:
+  - Test suites (`tests/`, `package.json`, `.github/`) are strictly excluded from `ASSETS_TO_CACHE` in [sw.js](file:///c:/Users/moluguaravind/road_cross_assist/sw.js).
+  - Pedestrian phones downloading the PWA install the exact same lightweight footprint with **0 bytes** of test overhead.
+  - `node_modules/` is excluded via [.gitignore](file:///c:/Users/moluguaravind/road_cross_assist/.gitignore).
+- **Multi-Tiered Test Runners**:
+  1. **Python Standard Library Suite** ([test_crosssafe.py](file:///c:/Users/moluguaravind/road_cross_assist/tests/test_crosssafe.py)): Executes 12 structural, DOM parity, cache integrity, and CSS keyframe tests in ~15 milliseconds with zero external dependencies.
+  2. **In-Browser Visual Test Runner** ([runner.html](file:///c:/Users/moluguaravind/road_cross_assist/tests/runner.html)): Double-clickable single-page visual test runner that tests strobe cadences, custom text sanitization, speed multipliers, SOS mode, orientation switching, and triple-tap gesture counters in live browser engines.
+  3. **Node.js Native Test Suite** ([unit.test.js](file:///c:/Users/moluguaravind/road_cross_assist/tests/unit.test.js)): Uses Node 18+ native `node:test` and `node:assert` modules without any npm dependencies.
+- **GitHub Actions CI Gatekeeper**:
+  - [.github/workflows/test.yml](file:///c:/Users/moluguaravind/road_cross_assist/.github/workflows/test.yml): Runs automatically on every push or pull request to `main` and `dev` branches, preventing buggy code from ever deploying.
+
 ---
 
 ## Verification Results

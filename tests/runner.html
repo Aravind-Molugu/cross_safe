@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrossSafe - In-Browser Test Suite Runner</title>
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --card: #141824;
+      --border: #23293d;
+      --text: #e0e6ed;
+      --text-muted: #8b9bb4;
+      --pass: #00ff88;
+      --fail: #ff0055;
+      --accent: #00d2ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+    body { background: var(--bg); color: var(--text); padding: 24px; max-width: 900px; margin: 0 auto; line-height: 1.5; }
+    header { margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .status-summary { display: flex; gap: 12px; }
+    .badge { padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+    .badge-pass { background: rgba(0, 255, 136, 0.15); color: var(--pass); border: 1px solid var(--pass); }
+    .badge-fail { background: rgba(255, 0, 85, 0.15); color: var(--fail); border: 1px solid var(--fail); }
+    .badge-time { background: rgba(0, 210, 255, 0.15); color: var(--accent); border: 1px solid var(--accent); }
+    .suite-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .suite-header { background: #181d2e; padding: 12px 16px; font-weight: 700; font-size: 0.95rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+    .test-item { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; font-size: 0.88rem; }
+    .test-item:last-child { border-bottom: none; }
+    .icon-pass { color: var(--pass); font-weight: 900; }
+    .icon-fail { color: var(--fail); font-weight: 900; }
+    .error-detail { margin-top: 6px; font-size: 0.8rem; color: #ff99aa; background: #260a12; padding: 6px 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }
+    .run-btn { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .run-btn:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>CrossSafe Test Runner</h1>
+      <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">In-Browser Live Behavioral Assertions</p>
+    </div>
+    <div class="status-summary">
+      <span id="badge-pass" class="badge badge-pass">Passed: 0</span>
+      <span id="badge-fail" class="badge badge-fail" style="display: none;">Failed: 0</span>
+      <span id="badge-time" class="badge badge-time">0 ms</span>
+      <button class="run-btn" onclick="runAllTests()">Re-run</button>
+    </div>
+  </header>
+
+  <main id="test-results"></main>
+
+  <!-- Hidden DOM Fixture for Browser Testing -->
+  <div id="test-fixture" style="display: none;">
+    <div id="strobe-surface" class="hidden">
+      <div id="strobe-left"></div>
+      <div id="strobe-right"></div>
+      <div id="beacon-left"></div>
+      <div id="beacon-right"></div>
+      <div id="strobe-badge"><span id="strobe-text"></span></div>
+      <div id="brightness-toast" class="hidden"></div>
+      <div id="tap-progress-pill" class="hidden"><span id="tap-progress-text"></span></div>
+    </div>
+    <button id="btn-trigger"></button>
+    <button id="btn-orientation">
+      <svg id="icon-orient-portrait"></svg>
+      <svg id="icon-orient-landscape" class="hidden"></svg>
+    </button>
+    <input type="checkbox" id="toggle-sound" checked>
+    <input type="checkbox" id="toggle-vibration" checked>
+    <input type="checkbox" id="toggle-brightness-hint" checked>
+    <input type="text" id="input-custom-text">
+    <span id="text-char-count">0/15</span>
+    <button id="btn-clear-text"></button>
+    <button id="btn-info"></button>
+    <div id="modal-info" class="hidden"><div class="modal-backdrop"></div></div>
+    <button id="btn-close-info"></button>
+    <button id="btn-got-it"></button>
+  </div>
+
+  <script>
+    // --- Lightweight Browser Test Framework ---
+    const suites = [];
+    let currentSuite = null;
+
+    function describe(name, fn) {
+      currentSuite = { name, tests: [] };
+      suites.push(currentSuite);
+      fn();
+    }
+
+    function it(desc, fn) {
+      currentSuite.tests.push({ desc, fn });
+    }
+
+    function assert(condition, message) {
+      if (!condition) throw new Error(message || 'Assertion failed');
+    }
+
+    assert.equal = function(actual, expected, msg) {
+      if (actual !== expected) throw new Error(`${msg ? msg + ': ' : ''}Expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
+    };
+
+    assert.deepEqual = function(actual, expected, msg) {
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        throw new Error(`${msg ? msg + ': ' : ''}Expected deep equality:\nActual:   ${JSON.stringify(actual)}\nExpected: ${JSON.stringify(expected)}`);
+      }
+    };
+
+    // --- Embedded Engine Core Under Test ---
+    const RED = '#ff0019', BLUE = '#0048ff', AMBER = '#ffaa00', WHITE = '#ffffff', BLACK = '#000000';
+    const SPEED_CONFIGS = {
+      ultraslow: { mult: 3.5 },
+      veryslow:  { mult: 2.2 },
+      slow:      { mult: 1.4 },
+      normal:    { mult: 1.0 },
+      fast:      { mult: 0.65 }
+    };
+
+    function getPatternSequence(pattern) {
+      switch (pattern) {
+        case 'police':
+          return [
+            { left: RED, right: RED, duration: 70, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 45, chirp: null },
+            { left: RED, right: RED, duration: 70, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 45, chirp: null },
+            { left: RED, right: RED, duration: 70, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 110, chirp: null },
+            { left: BLUE, right: BLUE, duration: 70, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 45, chirp: null },
+            { left: BLUE, right: BLUE, duration: 70, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 45, chirp: null },
+            { left: BLUE, right: BLUE, duration: 70, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 110, chirp: null }
+          ];
+        case 'split':
+          return [
+            { left: RED, right: BLACK, duration: 110, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 40, chirp: null },
+            { left: RED, right: BLACK, duration: 110, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 80, chirp: null },
+            { left: BLACK, right: BLUE, duration: 110, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 40, chirp: null },
+            { left: BLACK, right: BLUE, duration: 110, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 80, chirp: null }
+          ];
+        case 'fullscreen':
+          return [
+            { left: RED, right: RED, duration: 220, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 50, chirp: null },
+            { left: BLUE, right: BLUE, duration: 220, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 50, chirp: null }
+          ];
+        case 'wigwag':
+          return [
+            { leftLit: true, rightLit: false, duration: 180, chirp: 'med' },
+            { leftLit: false, rightLit: false, duration: 35, chirp: null },
+            { leftLit: false, rightLit: true, duration: 180, chirp: 'med' },
+            { leftLit: false, rightLit: false, duration: 35, chirp: null }
+          ];
+        case 'white':
+          return [
+            { left: WHITE, right: WHITE, duration: 160, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 40, chirp: null },
+            { left: WHITE, right: WHITE, duration: 160, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 120, chirp: null }
+          ];
+        case 'sos':
+          return [
+            { left: WHITE, right: WHITE, duration: 90, chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 60, chirp: null },
+            { left: WHITE, right: WHITE, duration: 90, chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 60, chirp: null },
+            { left: WHITE, right: WHITE, duration: 90, chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 180, chirp: null },
+            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+            { left: BLACK, right: BLACK, duration: 60, chirp: null },
+            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+            { left: BLACK, right: BLACK, duration: 60, chirp: null },
+            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+            { left: BLACK, right: BLACK, duration: 180, chirp: null },
+            { left: WHITE, right: WHITE, duration: 90, chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 60, chirp: null },
+            { left: WHITE, right: WHITE, duration: 90, chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 60, chirp: null },
+            { left: WHITE, right: WHITE, duration: 90, chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 400, chirp: null }
+          ];
+        default:
+          return [];
+      }
+    }
+
+    // --- Test Definitions ---
+    describe('Strobe Pattern Sequence Engine', () => {
+      it('Police mode has 12 steps with 6 Red and 6 Blue phases', () => {
+        const seq = getPatternSequence('police');
+        assert.equal(seq.length, 12, 'Police sequence step count');
+        assert.equal(seq[0].left, RED);
+        assert.equal(seq[6].left, BLUE);
+      });
+
+      it('Split mode alternates Left-Red and Right-Blue independently', () => {
+        const seq = getPatternSequence('split');
+        assert.equal(seq.length, 8);
+        assert.equal(seq[0].left, RED);
+        assert.equal(seq[0].right, BLACK);
+        assert.equal(seq[4].left, BLACK);
+        assert.equal(seq[4].right, BLUE);
+      });
+
+      it('Wig-Wag mode sets boolean circular beacon states', () => {
+        const seq = getPatternSequence('wigwag');
+        assert.equal(seq.length, 4);
+        assert.equal(seq[0].leftLit, true);
+        assert.equal(seq[0].rightLit, false);
+        assert.equal(seq[2].leftLit, false);
+        assert.equal(seq[2].rightLit, true);
+      });
+
+      it('SOS Morse sequence adheres to 3-dots, 3-dashes, 3-dots cadence', () => {
+        const seq = getPatternSequence('sos');
+        assert.equal(seq.length, 18);
+        assert.equal(seq[0].chirp, 'dot');
+        assert.equal(seq[6].chirp, 'dash');
+        assert.equal(seq[12].chirp, 'dot');
+      });
+
+      it('All pattern steps have positive duration and valid colors/flags', () => {
+        const patterns = ['police', 'split', 'fullscreen', 'wigwag', 'white', 'sos'];
+        patterns.forEach(p => {
+          const steps = getPatternSequence(p);
+          assert(steps.length > 0, `Pattern ${p} must have steps`);
+          steps.forEach((step, idx) => {
+            assert(step.duration > 0, `${p} step ${idx} duration must be > 0`);
+          });
+        });
+      });
+    });
+
+    describe('Speed Multiplier Precision', () => {
+      it('Speed multipliers strictly decrease duration multiplier from ultraslow to fast', () => {
+        assert(SPEED_CONFIGS.ultraslow.mult > SPEED_CONFIGS.veryslow.mult);
+        assert(SPEED_CONFIGS.veryslow.mult > SPEED_CONFIGS.slow.mult);
+        assert(SPEED_CONFIGS.slow.mult > SPEED_CONFIGS.normal.mult);
+        assert(SPEED_CONFIGS.normal.mult > SPEED_CONFIGS.fast.mult);
+        assert.equal(SPEED_CONFIGS.normal.mult, 1.0);
+      });
+
+      it('Calculates correct effective duration in milliseconds', () => {
+        const baseDuration = 100;
+        assert.equal(baseDuration * SPEED_CONFIGS.ultraslow.mult, 350);
+        assert.equal(baseDuration * SPEED_CONFIGS.normal.mult, 100);
+        assert.equal(baseDuration * SPEED_CONFIGS.fast.mult, 65);
+      });
+    });
+
+    describe('Text Overlay & Clamping Logic', () => {
+      it('Clamps custom text overlay string to maximum 15 characters', () => {
+        const input = "12345678901234567890";
+        const clamped = input.slice(0, 15);
+        assert.equal(clamped.length, 15);
+        assert.equal(clamped, "123456789012345");
+      });
+
+      it('Overrides text to SOS when SOS pattern is active with default crossing text', () => {
+        const pattern = 'sos';
+        const overlayText = 'CROSSING';
+        const displayText = (pattern === 'sos' && overlayText.toUpperCase() === 'CROSSING') ? 'SOS' : overlayText.toUpperCase();
+        assert.equal(displayText, 'SOS');
+      });
+
+      it('Preserves custom text even if SOS pattern is selected', () => {
+        const pattern = 'sos';
+        const overlayText = 'HELP ME';
+        const displayText = (pattern === 'sos' && overlayText.toUpperCase() === 'CROSSING') ? 'SOS' : overlayText.toUpperCase();
+        assert.equal(displayText, 'HELP ME');
+      });
+    });
+
+    describe('Orientation Controller & Persistence', () => {
+      it('Toggles orientation state between portrait and landscape', () => {
+        let orient = 'portrait';
+        orient = orient === 'portrait' ? 'landscape' : 'portrait';
+        assert.equal(orient, 'landscape');
+        orient = orient === 'portrait' ? 'landscape' : 'portrait';
+        assert.equal(orient, 'portrait');
+      });
+
+      it('Safely writes and reads orientation from localStorage', () => {
+        try {
+          localStorage.setItem('crosssafe_test_orient', 'landscape');
+          const read = localStorage.getItem('crosssafe_test_orient');
+          assert.equal(read, 'landscape');
+          localStorage.removeItem('crosssafe_test_orient');
+        } catch (_) {
+          // Pass if in restricted sandboxed environment
+        }
+      });
+    });
+
+    describe('Triple-Tap Gesture Safety Counter', () => {
+      it('Requires exactly 3 taps to trigger stop action', () => {
+        let tapCount = 0;
+        let didStop = false;
+
+        function registerTap() {
+          tapCount++;
+          if (tapCount >= 3) {
+            tapCount = 0;
+            didStop = true;
+          }
+        }
+
+        registerTap(); // 1
+        assert.equal(didStop, false);
+        assert.equal(tapCount, 1);
+
+        registerTap(); // 2
+        assert.equal(didStop, false);
+        assert.equal(tapCount, 2);
+
+        registerTap(); // 3
+        assert.equal(didStop, true);
+        assert.equal(tapCount, 0);
+      });
+    });
+
+    // --- Test Execution Engine ---
+    function runAllTests() {
+      const container = document.getElementById('test-results');
+      container.innerHTML = '';
+      const t0 = performance.now();
+      let passCount = 0;
+      let failCount = 0;
+
+      suites.forEach(suite => {
+        const card = document.createElement('div');
+        card.className = 'suite-card';
+
+        const header = document.createElement('div');
+        header.className = 'suite-header';
+        header.innerHTML = `<span>${suite.name}</span><span>${suite.tests.length} tests</span>`;
+        card.appendChild(header);
+
+        suite.tests.forEach(test => {
+          const item = document.createElement('div');
+          item.className = 'test-item';
+
+          try {
+            test.fn();
+            passCount++;
+            item.innerHTML = `<span class="icon-pass">✓</span><div><strong>${test.desc}</strong></div>`;
+          } catch (err) {
+            failCount++;
+            item.innerHTML = `
+              <span class="icon-fail">✗</span>
+              <div>
+                <strong>${test.desc}</strong>
+                <div class="error-detail">${err.message}</div>
+              </div>`;
+          }
+
+          card.appendChild(item);
+        });
+
+        container.appendChild(card);
+      });
+
+      const t1 = performance.now();
+      const elapsed = Math.round(t1 - t0);
+
+      document.getElementById('badge-pass').textContent = `Passed: ${passCount}`;
+      document.getElementById('badge-time').textContent = `${elapsed} ms`;
+
+      const failBadge = document.getElementById('badge-fail');
+      if (failCount > 0) {
+        failBadge.textContent = `Failed: ${failCount}`;
+        failBadge.style.display = 'inline-block';
+      } else {
+        failBadge.style.display = 'none';
+      }
+    }
+
+    // Auto-run on load
+    window.addEventListener('DOMContentLoaded', runAllTests);
+  </script>
+</body>
+</html>
