@@ -58,6 +58,21 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 - A dedicated, always-accessible circular `×` icon button is embedded inside the custom text box.
 - Tapping `×` performs a one-touch clear: sets custom text to blank, resets the live counter to `0/15`, deactivates presets, and suppresses the strobe text overlay (None mode) with physical haptic confirmation.
 
+### In-App Screen Orientation Toggle (Item #2)
+- **Problem Solved**: Hand movement and waving while crossing previously caused phones to trigger erratic OS auto-rotations or page reloads, unless users manually locked and unlocked device-level rotation settings.
+- **Header Toggle**: Added an orientation toggle button in the header with dedicated Portrait (`icon-orient-portrait`) and Landscape (`icon-orient-landscape`) SVG icons and an active cyan illumination state.
+- **Hardware-Accelerated Fallback**: Automatically invokes the `screen.orientation.lock('landscape')` API on Android/Chromium browsers, and gracefully applies a zero-lag 90° clockwise CSS transform (`.force-landscape`) on iOS Safari/WebKit devices.
+- **Persistence**: User preference is preserved in `localStorage` across page reloads and app restarts.
+
+### Animated Micro-Strobe Previews (Item #3)
+- **Problem Solved**: Previously, Police Strobe, Split Alternating, and Full Screen Flip used static or identical preview icons, causing ambiguity about what cadence each mode produced.
+- **Live CSS Animations**:
+  - **Police Strobe**: Multi-pulse red burst followed by multi-pulse blue burst.
+  - **Split Alternating**: Dual split halves separated by a distinct vertical divider, alternating Left-Red then Right-Blue.
+  - **Full Screen Flip**: Rapid whole-surface alternating red/blue flash.
+  - **Amber Wig-Wag**: Alternating circular beacon pulses.
+- **Zero Overhead**: Pure CSS keyframe animations running on GPU layers without JavaScript setInterval overhead.
+
 ---
 
 ## Verification Results

@@ -12,14 +12,16 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
 * **100% Offline Capability**: Runs completely without internet via Progressive Web App (PWA) caching and Service Workers.
 * **Emergency Strobe Modes**:
   * **Police Strobe**: High-intensity quad-flash Red $\rightarrow$ quad-flash Blue (maximum human-eye conspicuity at distance).
-  * **Split Alternating**: Left half Red / Right half Blue alternating.
+  * **Split Alternating**: Left half Red / Right half Blue alternating with a vertical divider.
   * **Full Screen Flip**: Alternating solid Red and solid Blue across the entire display.
-  * **Amber Hazard**: Pedestrian caution strobe for universal road safety.
+  * **Amber Hazard**: Pedestrian caution dual circular wig-wag strobe for universal road safety.
   * **White Beacon**: High-lumen pulsing pedestrian flashlight.
+* **Animated Micro-Strobe Previews**: Intuitive live CSS-animated previews on the selector tiles showing real-time cadences (Police Strobe quad-burst, Split Alternating dual halves, Full Screen alternating flips, and Wig-Wag blinking circles) so users immediately recognize each mode.
+* **In-App Screen Orientation Toggle**: One-tap toggle directly in the header to switch between Portrait and Landscape modes with zero reliance on cumbersome OS device orientation locks. Eliminates disruptive accidental screen rotation reloads when waving or moving your hand during crossings (includes hardware-accelerated 90° rotation fallback on iOS Safari).
 * **Screen Wake Lock API**: Prevents your phone screen from dimming or sleeping while crossing.
 * **Tactile Haptic Feedback**: Periodic subtle vibration pulses confirm the strobe is flashing while holding the screen faced towards oncoming cars.
 * **Web Audio Alert**: Synthesized audio chirps alert drivers without downloading any sound files.
-* **Text Overlay**: Optional large high-contrast **"CROSSING"** or **"STOP"** badge.
+* **Text Overlay**: Optional large high-contrast **"CROSSING"**, **"STOP"**, or custom message badge.
 * **Standalone Portable Edition**: Includes `crosssafe.html`—a single, zero-dependency file you can send via WhatsApp or AirDrop.
 
 ---

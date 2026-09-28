@@ -17,6 +17,7 @@
     soundEnabled: true,
     vibrationEnabled: true,
     brightnessHintEnabled: true,
+    orientation: 'portrait',
     wakeLock: null,
     audioCtx: null,
     strobeFrame: null,
@@ -165,6 +166,10 @@
   const toggleSound = document.getElementById('toggle-sound');
   const toggleVibration = document.getElementById('toggle-vibration');
   const toggleBrightnessHint = document.getElementById('toggle-brightness-hint');
+
+  const btnOrientation = document.getElementById('btn-orientation');
+  const iconOrientPortrait = document.getElementById('icon-orient-portrait');
+  const iconOrientLandscape = document.getElementById('icon-orient-landscape');
 
   const btnShare = document.getElementById('btn-share');
   const btnInfo = document.getElementById('btn-info');
@@ -390,6 +395,24 @@
       elBrightnessToast.classList.add('hidden');
     }
 
+    // In-App Orientation Lock / Virtual Landscape Rotation
+    if (state.orientation === 'landscape') {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {
+          if (window.innerHeight > window.innerWidth) {
+            elSurface.classList.add('force-landscape');
+          }
+        });
+      } else if (window.innerHeight > window.innerWidth) {
+        elSurface.classList.add('force-landscape');
+      }
+    } else {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(() => {});
+      }
+      elSurface.classList.remove('force-landscape');
+    }
+
     state.isActive = true;
     state.stepIndex = 0;
     state.lastTick = 0;
@@ -424,6 +447,12 @@
     if (elBrightnessToast) {
       elBrightnessToast.classList.add('hidden');
     }
+
+    // Release orientation lock & virtual landscape
+    if (screen.orientation && screen.orientation.unlock) {
+      try { screen.orientation.unlock(); } catch (_) {}
+    }
+    elSurface.classList.remove('force-landscape');
 
     elSurface.classList.add('hidden');
     elSurface.setAttribute('aria-hidden', 'true');
@@ -603,6 +632,46 @@
   if (toggleSound) state.soundEnabled = toggleSound.checked;
   if (toggleVibration) state.vibrationEnabled = toggleVibration.checked;
   if (toggleBrightnessHint) state.brightnessHintEnabled = toggleBrightnessHint.checked;
+
+  // --- In-App Screen Orientation Controller ---
+  function updateOrientationUI() {
+    if (!btnOrientation) return;
+    if (state.orientation === 'landscape') {
+      btnOrientation.classList.add('active');
+      btnOrientation.title = 'Screen Orientation: Landscape (Tap for Portrait)';
+      btnOrientation.setAttribute('aria-label', 'Screen Orientation: Landscape');
+      if (iconOrientPortrait) iconOrientPortrait.classList.add('hidden');
+      if (iconOrientLandscape) iconOrientLandscape.classList.remove('hidden');
+    } else {
+      btnOrientation.classList.remove('active');
+      btnOrientation.title = 'Screen Orientation: Portrait (Tap for Landscape)';
+      btnOrientation.setAttribute('aria-label', 'Screen Orientation: Portrait');
+      if (iconOrientPortrait) iconOrientPortrait.classList.remove('hidden');
+      if (iconOrientLandscape) iconOrientLandscape.classList.add('hidden');
+    }
+  }
+
+  if (btnOrientation) {
+    btnOrientation.addEventListener('click', () => {
+      state.orientation = state.orientation === 'portrait' ? 'landscape' : 'portrait';
+      try {
+        localStorage.setItem('crosssafe_orientation', state.orientation);
+      } catch (_) {}
+      updateOrientationUI();
+      if (navigator.vibrate && state.vibrationEnabled) {
+        try { navigator.vibrate(30); } catch (_) {}
+      }
+    });
+  }
+
+  // Restore saved orientation on startup
+  try {
+    const savedOrient = localStorage.getItem('crosssafe_orientation');
+    if (savedOrient === 'landscape' || savedOrient === 'portrait') {
+      state.orientation = savedOrient;
+    }
+  } catch (_) {}
+  updateOrientationUI();
 
   // --- Modals & Sharing ---
   function openModal(modal) {

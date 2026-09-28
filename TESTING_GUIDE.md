@@ -107,3 +107,5 @@ http://<YOUR_LAPTOP_IP>:8080
 | **Screen Wake Lock** | Screen stays awake and does not dim while crossing is active | [ ] |
 | **Offline Cache** | Loads instantly with no internet connection after first visit | [ ] |
 | **Keyboard Shortcut** | Pressing **Spacebar** or **Esc** stops flashing on laptop | [ ] |
+| **In-App Orientation Toggle** | Tapping the orientation icon in the header toggles between Portrait and Landscape states; persists in localStorage; switches icon and activates cyan glow in Landscape mode; forces wide-angle landscape strobe without OS rotation lock | [ ] |
+| **Animated Pattern Previews** | Selector tiles display live CSS keyframe micro-animations: Police Strobe quad-flashes red then blue; Split Alternating flashes left-red then right-blue with divider; Full Screen Flip alternates solid colors; Wig-Wag alternates circular beacons | [ ] |
