@@ -3,7 +3,7 @@
  * Strategy: Cache First with Background Revalidation
  */
 
-const CACHE_NAME = 'crosssafe-v1.6.0';
+const CACHE_NAME = 'crosssafe-v1.7.0';
 
 const ASSETS_TO_CACHE = [
   './',

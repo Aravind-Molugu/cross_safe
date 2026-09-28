@@ -351,11 +351,6 @@
     initAudio();
     requestWakeLock();
 
-    // Fullscreen if possible
-    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-
     // Toggle circular beacons vs split halves
     elSurface.classList.toggle('mode-circular', state.pattern === 'wigwag');
 
@@ -468,10 +463,6 @@
     }
 
     releaseWakeLock();
-
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
   }
 
   // --- Event Listeners ---
@@ -533,12 +524,100 @@
     }
   });
 
+  // --- Session State & Settings Persistence (localStorage) ---
+  const SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1';
+
+  function savePersistedSettings() {
+    try {
+      const data = {
+        pattern: state.pattern,
+        speed: state.speed,
+        textOverlayMode: state.textOverlayMode,
+        presetText: state.presetText,
+        customText: state.customText,
+        soundEnabled: state.soundEnabled,
+        vibrationEnabled: state.vibrationEnabled,
+        brightnessHintEnabled: state.brightnessHintEnabled,
+        orientation: state.orientation
+      };
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
+
+  function loadPersistedSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          if (typeof saved.soundEnabled === 'boolean') state.soundEnabled = saved.soundEnabled;
+          if (typeof saved.vibrationEnabled === 'boolean') state.vibrationEnabled = saved.vibrationEnabled;
+          if (typeof saved.brightnessHintEnabled === 'boolean') state.brightnessHintEnabled = saved.brightnessHintEnabled;
+          if (['police', 'split', 'fullscreen', 'wigwag', 'white', 'sos'].includes(saved.pattern)) state.pattern = saved.pattern;
+          if (['ultraslow', 'veryslow', 'slow', 'normal', 'fast'].includes(saved.speed)) state.speed = saved.speed;
+          if (['preset', 'custom'].includes(saved.textOverlayMode)) state.textOverlayMode = saved.textOverlayMode;
+          if (['CROSSING', 'STOP'].includes(saved.presetText)) state.presetText = saved.presetText;
+          if (typeof saved.customText === 'string') state.customText = saved.customText.slice(0, 15);
+          if (['portrait', 'landscape'].includes(saved.orientation)) state.orientation = saved.orientation;
+        }
+      } else {
+        // Legacy migration from item #2 key
+        const legacyOrient = localStorage.getItem('crosssafe_orientation');
+        if (legacyOrient === 'landscape' || legacyOrient === 'portrait') {
+          state.orientation = legacyOrient;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load persisted settings:', e);
+    }
+  }
+
+  function syncDOMWithState() {
+    // 1. Toggles
+    if (toggleSound) toggleSound.checked = state.soundEnabled;
+    if (toggleVibration) toggleVibration.checked = state.vibrationEnabled;
+    if (toggleBrightnessHint) toggleBrightnessHint.checked = state.brightnessHintEnabled;
+
+    // 2. Pattern Buttons
+    patternButtons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.pattern === state.pattern);
+    });
+
+    // 3. Speed Buttons
+    speedButtons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.speed === state.speed);
+    });
+
+    // 4. Text Overlay Mode & Values
+    if (state.textOverlayMode === 'preset') {
+      presetButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.preset === state.presetText);
+      });
+      if (inputCustomText) {
+        inputCustomText.value = '';
+        inputCustomText.classList.remove('active');
+      }
+      if (textCharCount) textCharCount.textContent = '0/15';
+    } else {
+      presetButtons.forEach((btn) => btn.classList.remove('active'));
+      if (inputCustomText) {
+        inputCustomText.value = state.customText || '';
+        inputCustomText.classList.toggle('active', !!state.customText);
+      }
+      if (textCharCount) textCharCount.textContent = `${(state.customText || '').length}/15`;
+    }
+
+    // 5. Orientation Glyph & Button State
+    updateOrientationUI();
+  }
+
   // Pattern Selector
   patternButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       patternButtons.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       state.pattern = btn.dataset.pattern;
+      savePersistedSettings();
     });
   });
 
@@ -548,6 +627,7 @@
       speedButtons.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       state.speed = btn.dataset.speed;
+      savePersistedSettings();
     });
   });
 
@@ -561,6 +641,7 @@
       if (inputCustomText) {
         inputCustomText.classList.remove('active');
       }
+      savePersistedSettings();
     });
   });
 
@@ -580,6 +661,7 @@
       if (textCharCount) {
         textCharCount.textContent = `${val.length}/15`;
       }
+      savePersistedSettings();
     };
 
     inputCustomText.addEventListener('focus', () => {
@@ -609,6 +691,7 @@
         if (navigator.vibrate && state.vibrationEnabled) {
           try { navigator.vibrate(30); } catch (_) {}
         }
+        savePersistedSettings();
         inputCustomText.focus();
       }
     });
@@ -618,20 +701,18 @@
   toggleSound.addEventListener('change', (e) => {
     state.soundEnabled = e.target.checked;
     if (state.soundEnabled) initAudio();
+    savePersistedSettings();
   });
 
   toggleVibration.addEventListener('change', (e) => {
     state.vibrationEnabled = e.target.checked;
+    savePersistedSettings();
   });
 
   toggleBrightnessHint.addEventListener('change', (e) => {
     state.brightnessHintEnabled = e.target.checked;
+    savePersistedSettings();
   });
-
-  // Sync initial toggle states from DOM
-  if (toggleSound) state.soundEnabled = toggleSound.checked;
-  if (toggleVibration) state.vibrationEnabled = toggleVibration.checked;
-  if (toggleBrightnessHint) state.brightnessHintEnabled = toggleBrightnessHint.checked;
 
   // --- In-App Screen Orientation Controller ---
   function updateOrientationUI() {
@@ -654,9 +735,7 @@
   if (btnOrientation) {
     btnOrientation.addEventListener('click', () => {
       state.orientation = state.orientation === 'portrait' ? 'landscape' : 'portrait';
-      try {
-        localStorage.setItem('crosssafe_orientation', state.orientation);
-      } catch (_) {}
+      savePersistedSettings();
       updateOrientationUI();
       if (navigator.vibrate && state.vibrationEnabled) {
         try { navigator.vibrate(30); } catch (_) {}
@@ -664,14 +743,9 @@
     });
   }
 
-  // Restore saved orientation on startup
-  try {
-    const savedOrient = localStorage.getItem('crosssafe_orientation');
-    if (savedOrient === 'landscape' || savedOrient === 'portrait') {
-      state.orientation = savedOrient;
-    }
-  } catch (_) {}
-  updateOrientationUI();
+  // Restore saved session settings on startup & sync UI
+  loadPersistedSettings();
+  syncDOMWithState();
 
   // --- Modals & Sharing ---
   function openModal(modal) {

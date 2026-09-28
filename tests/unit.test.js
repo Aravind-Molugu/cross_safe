@@ -103,7 +103,15 @@ describe('CSS Keyframes & Standalone Parity', () => {
   const crosssafe = getFileContent('crosssafe.html');
 
   test('Animated mini-strobe keyframes exist in styles.css and crosssafe.html', () => {
-    const keyframes = ['miniPoliceStrobe', 'miniSplitLeft', 'miniSplitRight', 'miniFullscreenFlip'];
+    const keyframes = [
+      'miniPoliceStrobe',
+      'miniSplitLeft',
+      'miniSplitRight',
+      'miniFullscreenFlip',
+      'miniWigWagLeft',
+      'miniWigWagRight',
+      'miniWhiteBeacon'
+    ];
     for (const kf of keyframes) {
       assert.ok(styles.includes(`@keyframes ${kf}`), `Missing @keyframes ${kf} in styles.css`);
       assert.ok(crosssafe.includes(`@keyframes ${kf}`), `Missing @keyframes ${kf} in crosssafe.html`);
@@ -115,3 +123,33 @@ describe('CSS Keyframes & Standalone Parity', () => {
     assert.ok(crosssafe.includes('.strobe-surface.force-landscape'));
   });
 });
+
+describe('Session State Persistence (localStorage)', () => {
+  const appJs = getFileContent('app.js');
+  const crosssafe = getFileContent('crosssafe.html');
+
+  test('SETTINGS_STORAGE_KEY matches crosssafe_settings_v1', () => {
+    assert.ok(appJs.includes("SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1'"));
+    assert.ok(crosssafe.includes("SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1'"));
+  });
+
+  test('Persistence functions exist in app.js and crosssafe.html', () => {
+    for (const fn of ['savePersistedSettings', 'loadPersistedSettings', 'syncDOMWithState']) {
+      assert.ok(appJs.includes(fn), `Missing ${fn} in app.js`);
+      assert.ok(crosssafe.includes(fn), `Missing ${fn} in crosssafe.html`);
+    }
+  });
+});
+
+describe('Option C Clean Fullscreen (Zero Android Pop-ups)', () => {
+  const appJs = getFileContent('app.js');
+  const crosssafe = getFileContent('crosssafe.html');
+
+  test('requestFullscreen and exitFullscreen calls are eliminated', () => {
+    assert.strictEqual(appJs.includes('requestFullscreen'), false);
+    assert.strictEqual(appJs.includes('exitFullscreen'), false);
+    assert.strictEqual(crosssafe.includes('requestFullscreen'), false);
+    assert.strictEqual(crosssafe.includes('exitFullscreen'), false);
+  });
+});
+

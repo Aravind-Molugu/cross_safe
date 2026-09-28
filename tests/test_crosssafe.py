@@ -150,12 +150,15 @@ class TestCssKeyframesAndStyles(unittest.TestCase):
         self.crosssafe = read_file("crosssafe.html")
 
     def test_animated_mini_strobe_keyframes_exist(self):
-        """Pure CSS animated mini-strobe keyframes must be declared."""
+        """Pure CSS animated mini-strobe keyframes must be declared for all active patterns."""
         required_keyframes = [
             "miniPoliceStrobe",
             "miniSplitLeft",
             "miniSplitRight",
-            "miniFullscreenFlip"
+            "miniFullscreenFlip",
+            "miniWigWagLeft",
+            "miniWigWagRight",
+            "miniWhiteBeacon"
         ]
         for kf in required_keyframes:
             self.assertIn(f"@keyframes {kf}", self.styles, f"@keyframes {kf} missing from styles.css")
@@ -167,6 +170,40 @@ class TestCssKeyframesAndStyles(unittest.TestCase):
         self.assertIn("transform: rotate(90deg)", self.styles)
         self.assertIn(".strobe-surface.force-landscape", self.crosssafe)
         self.assertIn("transform: rotate(90deg)", self.crosssafe)
+
+
+class TestSettingsPersistence(unittest.TestCase):
+    """Verifies that full session settings are stored and synchronized via localStorage."""
+
+    def setUp(self):
+        self.app_js = read_file("app.js")
+        self.crosssafe = read_file("crosssafe.html")
+
+    def test_settings_storage_key_version(self):
+        """Storage key must follow crosssafe_settings_v1 standard."""
+        self.assertIn("SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1'", self.app_js)
+        self.assertIn("SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1'", self.crosssafe)
+
+    def test_persistence_functions_present(self):
+        """savePersistedSettings, loadPersistedSettings, and syncDOMWithState must exist in app.js and crosssafe.html."""
+        for fn in ["savePersistedSettings", "loadPersistedSettings", "syncDOMWithState"]:
+            self.assertIn(fn, self.app_js, f"Function '{fn}' missing from app.js")
+            self.assertIn(fn, self.crosssafe, f"Function '{fn}' missing from crosssafe.html")
+
+
+class TestCleanFullscreenStrobe(unittest.TestCase):
+    """Verifies Option C architecture: zero Android OS security toasts or exit reflow flashes."""
+
+    def setUp(self):
+        self.app_js = read_file("app.js")
+        self.crosssafe = read_file("crosssafe.html")
+
+    def test_no_programmatic_fullscreen_calls(self):
+        """requestFullscreen and exitFullscreen must be eliminated to suppress OS pop-ups."""
+        self.assertNotIn("requestFullscreen", self.app_js, "Security alert: requestFullscreen found in app.js")
+        self.assertNotIn("exitFullscreen", self.app_js, "Security alert: exitFullscreen found in app.js")
+        self.assertNotIn("requestFullscreen", self.crosssafe, "Security alert: requestFullscreen found in crosssafe.html")
+        self.assertNotIn("exitFullscreen", self.crosssafe, "Security alert: exitFullscreen found in crosssafe.html")
 
 
 class TestStandaloneParity(unittest.TestCase):
@@ -182,7 +219,9 @@ class TestStandaloneParity(unittest.TestCase):
         self.assertIn("tap-progress-pill", self.crosssafe, "Triple-tap progress pill missing in crosssafe.html")
         self.assertIn("initAudio", self.crosssafe, "Web Audio synth missing in crosssafe.html")
         self.assertIn("requestWakeLock", self.crosssafe, "Wake lock API missing in crosssafe.html")
+        self.assertIn("savePersistedSettings", self.crosssafe, "Settings serializer missing in crosssafe.html")
 
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -18,6 +18,9 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
   * **White Beacon**: High-lumen pulsing pedestrian flashlight.
 * **Animated Micro-Strobe Previews**: Intuitive live CSS-animated previews on the selector tiles showing real-time cadences (Police Strobe quad-burst, Split Alternating dual halves, Full Screen alternating flips, and Wig-Wag blinking circles) so users immediately recognize each mode.
 * **In-App Screen Orientation Toggle**: One-tap toggle directly in the header to switch between Portrait and Landscape modes with zero reliance on cumbersome OS device orientation locks. Eliminates disruptive accidental screen rotation reloads when waving or moving your hand during crossings (includes hardware-accelerated 90° rotation fallback on iOS Safari).
+* **Live Animated Pattern Previews**: Selector tiles feature GPU-accelerated CSS micro-animations for Police Strobe, Split Alternating, Full Screen Flip, Dual Amber Wig-Wag, and White Beacon.
+* **Session & Settings Persistence**: Automatically saves all user selections (strobe pattern, cadence speed, preset or custom text overlay, orientation, audio, vibration, and brightness hints) via client-side `localStorage`.
+* **Clean Full-Viewport Strobe (Zero Pop-ups)**: Option C pure CSS viewport coverage eliminates Android OS fullscreen exit security toasts and screen flicker upon exit.
 * **Screen Wake Lock API**: Prevents your phone screen from dimming or sleeping while crossing.
 * **Tactile Haptic Feedback**: Periodic subtle vibration pulses confirm the strobe is flashing while holding the screen faced towards oncoming cars.
 * **Web Audio Alert**: Synthesized audio chirps alert drivers without downloading any sound files.

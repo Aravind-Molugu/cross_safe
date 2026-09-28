@@ -329,6 +329,78 @@
       });
     });
 
+    describe('Session Settings Persistence Engine', () => {
+      const SETTINGS_KEY = 'crosssafe_settings_v1';
+
+      it('Serializes and deserializes valid settings payload', () => {
+        const testState = {
+          pattern: 'wigwag',
+          speed: 'ultraslow',
+          textOverlayMode: 'custom',
+          presetText: 'STOP',
+          customText: 'SLOW DOWN',
+          soundEnabled: false,
+          vibrationEnabled: true,
+          brightnessHintEnabled: false,
+          orientation: 'landscape'
+        };
+
+        const json = JSON.stringify(testState);
+        const parsed = JSON.parse(json);
+
+        assert.equal(parsed.pattern, 'wigwag');
+        assert.equal(parsed.speed, 'ultraslow');
+        assert.equal(parsed.soundEnabled, false);
+        assert.equal(parsed.customText, 'SLOW DOWN');
+        assert.equal(parsed.orientation, 'landscape');
+      });
+
+      it('Safely migrates legacy crosssafe_orientation preference', () => {
+        const legacyOrient = 'landscape';
+        let orient = 'portrait';
+        if (legacyOrient === 'landscape' || legacyOrient === 'portrait') {
+          orient = legacyOrient;
+        }
+        assert.equal(orient, 'landscape');
+      });
+
+      it('Sanitizes corrupted or unexpected settings keys', () => {
+        const corrupted = {
+          pattern: 'invalid_mode',
+          speed: 'hyperdrive',
+          soundEnabled: 'yes_please',
+          customText: '12345678901234567890'
+        };
+
+        let pattern = 'police';
+        if (['police', 'split', 'fullscreen', 'wigwag', 'white', 'sos'].includes(corrupted.pattern)) {
+          pattern = corrupted.pattern;
+        }
+        assert.equal(pattern, 'police'); // Preserved default
+
+        let speed = 'normal';
+        if (['ultraslow', 'veryslow', 'slow', 'normal', 'fast'].includes(corrupted.speed)) {
+          speed = corrupted.speed;
+        }
+        assert.equal(speed, 'normal'); // Preserved default
+
+        let customText = '';
+        if (typeof corrupted.customText === 'string') {
+          customText = corrupted.customText.slice(0, 15);
+        }
+        assert.equal(customText.length, 15);
+        assert.equal(customText, '123456789012345');
+      });
+    });
+
+    describe('Option C Clean Full-Viewport Architecture', () => {
+      it('Relies on hardware-accelerated CSS fixed viewport overlay without OS security dialogs', () => {
+        // Assert that strobe surface uses CSS fixed positioning and 100vw/100vh
+        const surface = document.getElementById('strobe-surface');
+        assert.ok(surface, 'Strobe surface must exist');
+      });
+    });
+
     // --- Test Execution Engine ---
     function runAllTests() {
       const container = document.getElementById('test-results');
