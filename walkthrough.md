@@ -90,3 +90,10 @@ All static assets verified successfully!
    python -m http.server 8080
    ```
    Open `http://localhost:8080`, press `F12`, and toggle `Ctrl + Shift + M` to test on an iPhone or Android screen.
+
+3. **Option C (Live Mobile Phone Installation via GitHub Pages)**:
+   - **Repository**: [https://github.com/Aravind-Molugu/cross_safe](https://github.com/Aravind-Molugu/cross_safe)
+   - **Live App URL**: [https://aravind-molugu.github.io/cross_safe/](https://aravind-molugu.github.io/cross_safe/)
+   - **iPhone (Safari)**: Open the link $\rightarrow$ Tap **Share** $\rightarrow$ Tap **"Add to Home Screen"**.
+   - **Android (Chrome)**: Open the link $\rightarrow$ Tap **three dots** $\rightarrow$ Tap **"Install app"** or **"Add to Home screen"**.
+   - **Airplane Mode Test**: Once installed, switch phone to Airplane Mode and open CrossSafe from your home screen. It will open and run completely offline!
