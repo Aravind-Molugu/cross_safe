@@ -9,3 +9,8 @@ __pycache__/
 
 # Local scratch / test files
 scratch/
+
+# Local planning & tracking checklists
+ToDoList.txt
+ToDo_spec.md
+
