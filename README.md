@@ -45,7 +45,7 @@ road_cross_assist/
 ## 💻 How to Test Locally on Your Laptop
 
 ### 1. Test the Standalone Version (Zero Setup)
-Simply double-click `crosssafe.html` in your file explorer to open it in Chrome, Edge, or Safari. Press **Spacebar** or click **"START CROSSING"** to test.
+Simply double-click `crosssafe.html` in your file explorer to open it in Chrome, Edge, or Safari. Press **Spacebar** or click **"START"** to test.
 
 ### 2. Test the Full PWA (Simulate Phone & Offline Mode)
 1. In this directory, run:

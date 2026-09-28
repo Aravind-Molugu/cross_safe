@@ -59,8 +59,14 @@
     <div id="strobe-badge" class="strobe-badge">
       <span id="strobe-text">PEDESTRIAN CROSSING</span>
     </div>
+
+    <!-- Triple Tap Progress Feedback Pill -->
+    <div id="tap-progress-pill" class="tap-progress-pill hidden" aria-live="polite">
+      <span id="tap-progress-text">Tap 2 more times to stop</span>
+    </div>
+
     <div class="strobe-dismiss-hint">
-      <span>TAP ANYWHERE OR PRESS ESC TO STOP</span>
+      <span>TRIPLE TAP ANYWHERE OR PRESS ESC TO STOP</span>
     </div>
   </div>
 
@@ -115,14 +121,14 @@
 
     <!-- Hero Trigger Button -->
     <section class="trigger-section">
-      <button id="btn-trigger" class="btn-trigger" aria-label="Start Crossing Flasher">
+      <button id="btn-trigger" class="btn-trigger" aria-label="Start Flasher">
         <div class="pulse-ring"></div>
         <div class="pulse-ring ring-2"></div>
         <div class="trigger-inner">
           <svg class="trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
-          <span class="trigger-text">START CROSSING</span>
+          <span class="trigger-text">START</span>
           <span class="trigger-sub">Tap to activate emergency strobe</span>
         </div>
       </button>

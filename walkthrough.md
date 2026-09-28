@@ -46,6 +46,14 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 - **Normal (1.0x multiplier, ~4.0 Hz)**: Default active crossing strobe.
 - **Rapid (0.65x multiplier, ~8.0 Hz)**: High-urgency emergency vehicle flash.
 
+### Accidental Closure Prevention (Triple-Tap to Stop)
+- **3-Tap Protection**: Requires 3 taps anywhere on the strobe surface within an 800ms window to stop crossing. Accidental single touches or brushing against clothing will not cancel the flasher.
+- **Interactive Feedback**: A sleek floating pill (`Tap 2 more times to stop` $\rightarrow$ `Tap 1 more time to stop`) provides real-time progress with tactile haptic vibration.
+- **Desktop Instant Stop**: Pressing `Spacebar` or `Escape` remains a 1-key instant stop for laptop testing.
+
+### Auto Max Brightness Hint Toggle Fix
+- Strobe screen brightness reminder banner strictly respects the settings toggle (`toggleBrightnessHint.checked`) on startup and during crossing activation. When switched OFF, the reminder is completely suppressed.
+
 ---
 
 ## Verification Results
@@ -70,7 +78,7 @@ All static assets verified successfully!
 ## Quick Start: How to Test Right Now
 
 1. **Option A (Double-Click Test)**:
-   Double-click [crosssafe.html](file:///c:/Users/moluguaravind/road_cross_assist/crosssafe.html) in Windows File Explorer. Press `Spacebar` or click **"START CROSSING"**.
+   Double-click [crosssafe.html](file:///c:/Users/moluguaravind/road_cross_assist/crosssafe.html) in Windows File Explorer. Press `Spacebar` or click **"START"**.
 
 2. **Option B (Mobile Device Emulation & Offline Test)**:
    In your terminal, run:

@@ -194,6 +194,37 @@
       0%, 100% { opacity: 0.6; }
       50% { opacity: 1; }
     }
+    .tap-progress-pill {
+      position: absolute;
+      bottom: calc(66px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.92);
+      border: 2px solid var(--accent-cyan);
+      padding: 10px 22px;
+      border-radius: var(--radius-full);
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(0, 210, 255, 0.5);
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
+      animation: tapBounce 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: opacity 0.25s ease;
+    }
+    .tap-progress-pill.fade-out {
+      opacity: 0;
+    }
+    @keyframes tapBounce {
+      0% {
+        transform: translate(-50%, 6px) scale(0.9);
+      }
+      100% {
+        transform: translate(-50%, 0) scale(1);
+      }
+    }
     .brightness-toast {
       position: absolute;
       top: calc(24px + var(--safe-top));
@@ -839,8 +870,14 @@
     <div id="strobe-badge" class="strobe-badge">
       <span id="strobe-text">PEDESTRIAN CROSSING</span>
     </div>
+
+    <!-- Triple Tap Progress Feedback Pill -->
+    <div id="tap-progress-pill" class="tap-progress-pill hidden" aria-live="polite">
+      <span id="tap-progress-text">Tap 2 more times to stop</span>
+    </div>
+
     <div class="strobe-dismiss-hint">
-      <span>TAP ANYWHERE OR PRESS ESC TO STOP</span>
+      <span>TRIPLE TAP ANYWHERE OR PRESS ESC TO STOP</span>
     </div>
   </div>
 
@@ -886,14 +923,14 @@
 
     <!-- Hero Trigger Button -->
     <section class="trigger-section">
-      <button id="btn-trigger" class="btn-trigger" aria-label="Start Crossing Flasher">
+      <button id="btn-trigger" class="btn-trigger" aria-label="Start Flasher">
         <div class="pulse-ring"></div>
         <div class="pulse-ring ring-2"></div>
         <div class="trigger-inner">
           <svg class="trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
-          <span class="trigger-text">START CROSSING</span>
+          <span class="trigger-text">START</span>
           <span class="trigger-sub">Tap to activate emergency strobe</span>
         </div>
       </button>
@@ -1163,6 +1200,10 @@
     const elStrobeText = document.getElementById('strobe-text');
     const elBrightnessToast = document.getElementById('brightness-toast');
     let brightnessToastTimer = null;
+    const elTapPill = document.getElementById('tap-progress-pill');
+    const elTapText = document.getElementById('tap-progress-text');
+    let tapCount = 0;
+    let tapResetTimer = null;
     const btnTrigger = document.getElementById('btn-trigger');
     const badgeWakeLock = document.getElementById('badge-wakelock');
     const patternButtons = document.querySelectorAll('.pattern-btn');
@@ -1327,8 +1368,14 @@
         elStrobeText.textContent = displayText;
         elSurface.classList.add('show-badge');
       }
+      // Reset tap state
+      tapCount = 0;
+      if (tapResetTimer) clearTimeout(tapResetTimer);
+      if (elTapPill) elTapPill.classList.add('hidden');
+
       // Show Auto Max Brightness Hint Toast if enabled
-      if (state.brightnessHintEnabled && elBrightnessToast) {
+      const isBrightnessHintOn = toggleBrightnessHint ? toggleBrightnessHint.checked : state.brightnessHintEnabled;
+      if (isBrightnessHintOn && elBrightnessToast) {
         if (brightnessToastTimer) clearTimeout(brightnessToastTimer);
         elBrightnessToast.classList.remove('hidden', 'toast-fade');
         brightnessToastTimer = setTimeout(() => {
@@ -1356,6 +1403,16 @@
         cancelAnimationFrame(state.strobeFrame);
         state.strobeFrame = null;
       }
+
+      tapCount = 0;
+      if (tapResetTimer) {
+        clearTimeout(tapResetTimer);
+        tapResetTimer = null;
+      }
+      if (elTapPill) {
+        elTapPill.classList.add('hidden');
+      }
+
       if (brightnessToastTimer) {
         clearTimeout(brightnessToastTimer);
         brightnessToastTimer = null;
@@ -1383,7 +1440,44 @@
     }
 
     btnTrigger.addEventListener('click', startCrossing);
-    elSurface.addEventListener('click', stopCrossing);
+
+    // Triple-tap anywhere on strobe surface to stop (prevents accidental dismissals)
+    elSurface.addEventListener('click', () => {
+      if (!state.isActive) return;
+      tapCount++;
+      if (tapResetTimer) clearTimeout(tapResetTimer);
+
+      if (tapCount >= 3) {
+        tapCount = 0;
+        if (elTapPill) elTapPill.classList.add('hidden');
+        if (navigator.vibrate && state.vibrationEnabled) {
+          try { navigator.vibrate([60, 40, 60]); } catch (_) {}
+        }
+        stopCrossing();
+        return;
+      }
+
+      const remaining = 3 - tapCount;
+      if (elTapText) {
+        elTapText.textContent = remaining === 1 ? 'Tap 1 more time to stop' : 'Tap 2 more times to stop';
+      }
+      if (elTapPill) {
+        elTapPill.classList.remove('hidden', 'fade-out');
+      }
+      if (navigator.vibrate && state.vibrationEnabled) {
+        try { navigator.vibrate(40); } catch (_) {}
+      }
+
+      tapResetTimer = setTimeout(() => {
+        tapCount = 0;
+        if (elTapPill) {
+          elTapPill.classList.add('fade-out');
+          setTimeout(() => {
+            if (tapCount === 0) elTapPill.classList.add('hidden');
+          }, 250);
+        }
+      }, 800);
+    });
 
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
@@ -1480,6 +1574,11 @@
         state.brightnessHintEnabled = e.target.checked;
       });
     }
+
+    // Sync initial toggle states from DOM
+    if (toggleSound) state.soundEnabled = toggleSound.checked;
+    if (toggleVibration) state.vibrationEnabled = toggleVibration.checked;
+    if (toggleBrightnessHint) state.brightnessHintEnabled = toggleBrightnessHint.checked;
 
     btnInfo.addEventListener('click', () => modalInfo.classList.remove('hidden'));
     btnCloseInfo.addEventListener('click', () => modalInfo.classList.add('hidden'));

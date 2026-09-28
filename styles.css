@@ -213,6 +213,40 @@ body {
   animation: pulseDim 2s infinite ease-in-out;
 }
 
+.tap-progress-pill {
+  position: absolute;
+  bottom: calc(66px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.92);
+  border: 2px solid var(--accent-cyan);
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(0, 210, 255, 0.5);
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  animation: tapBounce 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: opacity 0.25s ease;
+}
+
+.tap-progress-pill.fade-out {
+  opacity: 0;
+}
+
+@keyframes tapBounce {
+  0% {
+    transform: translate(-50%, 6px) scale(0.9);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
 @keyframes pulseDim {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }

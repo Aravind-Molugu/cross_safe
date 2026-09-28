@@ -146,6 +146,10 @@
   const elStrobeText = document.getElementById('strobe-text');
   const elBrightnessToast = document.getElementById('brightness-toast');
   let brightnessToastTimer = null;
+  const elTapPill = document.getElementById('tap-progress-pill');
+  const elTapText = document.getElementById('tap-progress-text');
+  let tapCount = 0;
+  let tapResetTimer = null;
 
   const btnTrigger = document.getElementById('btn-trigger');
   const badgeWakeLock = document.getElementById('badge-wakelock');
@@ -366,8 +370,14 @@
       elSurface.classList.add('show-badge');
     }
 
+    // Reset tap state
+    tapCount = 0;
+    if (tapResetTimer) clearTimeout(tapResetTimer);
+    if (elTapPill) elTapPill.classList.add('hidden');
+
     // Show Auto Max Brightness Hint Toast if enabled
-    if (state.brightnessHintEnabled && elBrightnessToast) {
+    const isBrightnessHintOn = toggleBrightnessHint ? toggleBrightnessHint.checked : state.brightnessHintEnabled;
+    if (isBrightnessHintOn && elBrightnessToast) {
       if (brightnessToastTimer) clearTimeout(brightnessToastTimer);
       elBrightnessToast.classList.remove('hidden', 'toast-fade');
       brightnessToastTimer = setTimeout(() => {
@@ -396,6 +406,15 @@
     if (state.strobeFrame) {
       cancelAnimationFrame(state.strobeFrame);
       state.strobeFrame = null;
+    }
+
+    tapCount = 0;
+    if (tapResetTimer) {
+      clearTimeout(tapResetTimer);
+      tapResetTimer = null;
+    }
+    if (elTapPill) {
+      elTapPill.classList.add('hidden');
     }
 
     if (brightnessToastTimer) {
@@ -433,9 +452,42 @@
     startCrossing();
   });
 
-  // Tap anywhere on strobe surface to stop
+  // Triple-tap anywhere on strobe surface to stop (prevents accidental dismissals)
   elSurface.addEventListener('click', () => {
-    stopCrossing();
+    if (!state.isActive) return;
+    tapCount++;
+    if (tapResetTimer) clearTimeout(tapResetTimer);
+
+    if (tapCount >= 3) {
+      tapCount = 0;
+      if (elTapPill) elTapPill.classList.add('hidden');
+      if (navigator.vibrate && state.vibrationEnabled) {
+        try { navigator.vibrate([60, 40, 60]); } catch (_) {}
+      }
+      stopCrossing();
+      return;
+    }
+
+    const remaining = 3 - tapCount;
+    if (elTapText) {
+      elTapText.textContent = remaining === 1 ? 'Tap 1 more time to stop' : 'Tap 2 more times to stop';
+    }
+    if (elTapPill) {
+      elTapPill.classList.remove('hidden', 'fade-out');
+    }
+    if (navigator.vibrate && state.vibrationEnabled) {
+      try { navigator.vibrate(40); } catch (_) {}
+    }
+
+    tapResetTimer = setTimeout(() => {
+      tapCount = 0;
+      if (elTapPill) {
+        elTapPill.classList.add('fade-out');
+        setTimeout(() => {
+          if (tapCount === 0) elTapPill.classList.add('hidden');
+        }, 250);
+      }
+    }, 800);
   });
 
   // Keyboard controls
@@ -544,6 +596,11 @@
   toggleBrightnessHint.addEventListener('change', (e) => {
     state.brightnessHintEnabled = e.target.checked;
   });
+
+  // Sync initial toggle states from DOM
+  if (toggleSound) state.soundEnabled = toggleSound.checked;
+  if (toggleVibration) state.vibrationEnabled = toggleVibration.checked;
+  if (toggleBrightnessHint) state.brightnessHintEnabled = toggleBrightnessHint.checked;
 
   // --- Modals & Sharing ---
   function openModal(modal) {

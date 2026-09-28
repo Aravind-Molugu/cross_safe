@@ -100,7 +100,9 @@ http://<YOUR_LAPTOP_IP>:8080
 | **Speed Control** | Smooth transition across 5 speed levels: Ultra Slow (~0.5 Hz), Very Slow (~1.0 Hz), Slow (~1.5 Hz), Normal (~4.0 Hz), Rapid (~8.0 Hz) | [ ] |
 | **Audio Toggle** | Synthesized crossing chirp plays on click/tap | [ ] |
 | **Vibration** | Haptic pulse fires periodically on supported mobile browsers | [ ] |
-| **Max Brightness Hint** | When enabled, a reminder banner appears at the top of the strobe screen and auto-fades after 3.5s; when disabled, the reminder is suppressed | [ ] |
+| **Max Brightness Hint** | When enabled, a reminder banner appears at the top of the strobe screen and auto-fades after 3.5s; when toggle is OFF, the reminder is strictly suppressed | [ ] |
+| **Triple Tap to Stop** | Tap 1 shows "Tap 2 more times to stop" pill + haptic buzz; Tap 2 shows "Tap 1 more time to stop"; Tap 3 stops crossing and returns to home screen | [ ] |
+| **Tap Accidental Timeout** | Tapping once or twice and pausing >800ms resets the counter and keeps flashing active | [ ] |
 | **Screen Wake Lock** | Screen stays awake and does not dim while crossing is active | [ ] |
 | **Offline Cache** | Loads instantly with no internet connection after first visit | [ ] |
-| **Keyboard Shortcut** | Pressing **Spacebar** toggles flashing on/off on laptop | [ ] |
+| **Keyboard Shortcut** | Pressing **Spacebar** or **Esc** stops flashing on laptop | [ ] |
