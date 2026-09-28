@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0d14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CrossSafe">
+  <title>CrossSafe - Road Crossing Assist (Standalone Offline Edition)</title>
+  
+  <style>
+    /* CrossSafe - Embedded Standalone Stylesheet */
+    :root {
+      --bg-dark: #0a0d14;
+      --bg-card: #131926;
+      --bg-card-hover: #1c2436;
+      --border-color: #242f45;
+      --text-main: #f0f4fc;
+      --text-muted: #8e9bb3;
+      --strobe-red: #ff0019;
+      --strobe-blue: #0048ff;
+      --strobe-amber: #ffaa00;
+      --strobe-white: #ffffff;
+      --accent-cyan: #00d2ff;
+      --accent-green: #00e676;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-full: 9999px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    .strobe-surface {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      z-index: 999999;
+      background-color: #000;
+      display: flex;
+      cursor: pointer;
+      touch-action: manipulation;
+      will-change: background-color, opacity;
+      transform: translateZ(0);
+    }
+    .strobe-surface.hidden {
+      display: none !important;
+    }
+    .strobe-half {
+      flex: 1;
+      height: 100%;
+      will-change: opacity, background-color;
+    }
+    .circular-beacons-container {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-evenly;
+      background-color: #000;
+      box-sizing: border-box;
+      padding: 1vmin;
+      overflow: hidden;
+    }
+    .strobe-surface.mode-circular .strobe-half {
+      display: none !important;
+    }
+    .strobe-surface.mode-circular .circular-beacons-container {
+      display: flex !important;
+    }
+    .beacon-pod {
+      width: min(48.5vw, 96vh);
+      height: min(48.5vw, 96vh);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 50%;
+    }
+    .beacon-housing {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #1e1e1e 60%, #0a0a0a 100%);
+      border: min(1.8vw, 8px) solid #282828;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 min(3vw, 16px) #000, 0 6px min(5vw, 24px) rgba(0, 0, 0, 0.95);
+      box-sizing: border-box;
+    }
+    .beacon-lens {
+      width: 90%;
+      height: 90%;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.02s linear, box-shadow 0.02s linear;
+    }
+    .beacon-rings {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 6px, rgba(0, 0, 0, 0.22) 7px, transparent 8px);
+      pointer-events: none;
+    }
+    .beacon-pod.lit .beacon-lens {
+      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #fff2a3 15%, #ffb700 45%, #ff8000 70%, #d94b00 90%, #661e00 100%);
+      box-shadow: 0 0 min(8vw, 45px) #ffaa00, 0 0 min(16vw, 90px) rgba(255, 170, 0, 0.85), inset 0 0 min(6vw, 35px) #ffffff;
+    }
+    .beacon-pod.lit .beacon-core {
+      width: 32%;
+      height: 32%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 35%, rgba(255, 255, 220, 0.9) 65%, transparent 100%);
+      filter: blur(1.5px);
+      box-shadow: 0 0 min(4vw, 20px) #ffffff;
+    }
+    .beacon-pod.unlit .beacon-lens {
+      background: radial-gradient(circle at 50% 50%, #362000 0%, #241500 45%, #150c00 80%, #0a0500 100%);
+      box-shadow: inset 0 0 min(5vw, 25px) rgba(0, 0, 0, 0.95);
+      opacity: 0.6;
+    }
+    .beacon-pod.unlit .beacon-core {
+      width: 25%;
+      height: 25%;
+      border-radius: 50%;
+      background: #140b00;
+      opacity: 0.2;
+    }
+    .strobe-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.88);
+      border: 4px solid #ffffff;
+      padding: 16px 28px;
+      border-radius: var(--radius-lg);
+      color: #ffffff;
+      font-size: clamp(1.8rem, 6vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      display: none;
+    }
+    .strobe-surface.show-badge .strobe-badge {
+      display: block;
+    }
+    .strobe-dismiss-hint {
+      position: absolute;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.8);
+      pointer-events: none;
+      animation: pulseDim 2s infinite ease-in-out;
+    }
+    @keyframes pulseDim {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    .app-container {
+      max-width: 520px;
+      margin: 0 auto;
+      width: 100%;
+      padding: calc(16px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--accent-cyan);
+    }
+    .app-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .app-tagline {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .icon-btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-cyan);
+    }
+    .status-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+    .badge-offline .dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-green);
+    }
+    .badge-wakelock {
+      color: var(--accent-cyan);
+    }
+    .trigger-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 12px 0;
+      position: relative;
+    }
+    .btn-trigger {
+      position: relative;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+    }
+    .trigger-inner {
+      position: relative;
+      z-index: 2;
+      width: 175px;
+      height: 175px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ff0844 0%, #ff4e50 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(255, 8, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      color: #fff;
+    }
+    .btn-trigger:active .trigger-inner {
+      transform: scale(0.94);
+      box-shadow: 0 4px 15px rgba(255, 8, 68, 0.3);
+    }
+    .trigger-icon {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 4px;
+      fill: rgba(255, 255, 255, 0.2);
+    }
+    .trigger-text {
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .trigger-sub {
+      font-size: 0.65rem;
+      opacity: 0.85;
+      margin-top: 3px;
+      text-align: center;
+      max-width: 130px;
+    }
+    .pulse-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255, 8, 68, 0.25);
+      animation: pulseAnim 2.4s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+      z-index: 1;
+    }
+    .pulse-ring.ring-2 {
+      animation-delay: 1.2s;
+    }
+    @keyframes pulseAnim {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    .hint-text {
+      margin-top: 14px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .settings-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .pattern-btn {
+      background: var(--bg-dark);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .pattern-btn.active {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 210, 255, 0.06);
+    }
+    .pattern-preview {
+      width: 100%;
+      height: 20px;
+      border-radius: var(--radius-sm);
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .police-preview {
+      background: linear-gradient(90deg, var(--strobe-red) 50%, var(--strobe-blue) 50%);
+    }
+    .split-preview {
+      background: linear-gradient(90deg, var(--strobe-red) 50%, var(--strobe-blue) 50%);
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+    }
+    .fullscreen-preview {
+      background: linear-gradient(135deg, var(--strobe-red) 0%, var(--strobe-blue) 100%);
+    }
+    .wigwag-preview {
+      background: #0d0d0d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .preview-circle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #2b1800;
+      border: 1.5px solid #ffaa00;
+    }
+    .preview-circle.left-circle {
+      background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+      box-shadow: 0 0 8px #ffaa00;
+    }
+    .white-preview {
+      background: #ffffff;
+    }
+    .sos-preview {
+      background: #111;
+      border: 1px solid #333;
+    }
+    .sos-morse {
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 1.5px;
+    }
+    .pattern-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: center;
+      width: 100%;
+    }
+    .pattern-desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: center;
+      width: 100%;
+      line-height: 1.25;
+    }
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 400px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option-group-full {
+      grid-column: 1 / -1;
+    }
+    .option-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .segmented-control {
+      display: flex;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 3px;
+    }
+    .speed-segmented .segment-btn {
+      font-size: 0.72rem;
+      padding: 8px 2px;
+      white-space: nowrap;
+    }
+    .segment-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 8px 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .segment-btn.active {
+      background: var(--bg-card);
+      color: var(--text-main);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    /* Text Overlay Control: Presets + Custom Input */
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .char-counter {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .overlay-control-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+    .overlay-presets {
+      flex: 0 0 170px;
+    }
+    @media (max-width: 440px) {
+      .overlay-presets {
+        flex: 1 1 100%;
+      }
+    }
+    .overlay-custom-wrap {
+      flex: 1 1 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .overlay-custom-input {
+      width: 100%;
+      background: var(--bg-dark);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 34px 8px 12px;
+      color: var(--text-main);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      height: 100%;
+      min-height: 38px;
+    }
+    .overlay-custom-input:focus,
+    .overlay-custom-input.active {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+      background: rgba(0, 210, 255, 0.04);
+    }
+    .overlay-custom-input::placeholder {
+      color: #4f5d75;
+      font-weight: 500;
+    }
+    .btn-clear-input {
+      position: absolute;
+      right: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .btn-clear-input:hover {
+      color: var(--text-main);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .input-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .toggles-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .toggle-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .toggle-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .toggle-desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .toggle-switch {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 44px;
+      height: 24px;
+      background: #252e42;
+      border-radius: var(--radius-full);
+      position: relative;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.25s ease;
+      flex-shrink: 0;
+    }
+    .toggle-switch::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toggle-switch:checked {
+      background: var(--accent-cyan);
+    }
+    .toggle-switch:checked::before {
+      transform: translateX(20px);
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.hidden {
+      display: none !important;
+    }
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+    }
+    .modal-content {
+      position: relative;
+      z-index: 2;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      max-width: 440px;
+      width: 100%;
+      padding: 24px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .instruction-block {
+      margin-bottom: 16px;
+    }
+    .instruction-block h4 {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .instruction-block ol {
+      padding-left: 20px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .instruction-block ol strong {
+      color: var(--text-main);
+    }
+    .note-box {
+      background: rgba(255, 170, 0, 0.1);
+      border-left: 3px solid var(--strobe-amber);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      color: #ffcc66;
+    }
+    .modal-footer {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-primary {
+      background: var(--accent-cyan);
+      color: #000;
+      border: none;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Strobe Light Surface -->
+  <div id="strobe-surface" class="strobe-surface hidden" aria-hidden="true">
+    <div id="strobe-left" class="strobe-half left"></div>
+    <div id="strobe-right" class="strobe-half right"></div>
+    
+    <!-- Dual Circular Beacons (Dual Amber Wig-Wag Mode) -->
+    <div id="circular-beacons" class="circular-beacons-container">
+      <div id="beacon-left" class="beacon-pod unlit">
+        <div class="beacon-housing">
+          <div class="beacon-lens">
+            <div class="beacon-core"></div>
+            <div class="beacon-rings"></div>
+          </div>
+        </div>
+      </div>
+      <div id="beacon-right" class="beacon-pod unlit">
+        <div class="beacon-housing">
+          <div class="beacon-lens">
+            <div class="beacon-core"></div>
+            <div class="beacon-rings"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="strobe-badge" class="strobe-badge">
+      <span id="strobe-text">PEDESTRIAN CROSSING</span>
+    </div>
+    <div class="strobe-dismiss-hint">
+      <span>TAP ANYWHERE OR PRESS ESC TO STOP</span>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <main class="app-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <div>
+          <h1 class="app-title">CrossSafe</h1>
+          <p class="app-tagline">Offline Standalone Edition</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-info" class="icon-btn" title="Offline setup & help" aria-label="Help">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Status Banner -->
+    <div class="status-bar">
+      <span class="badge badge-offline">
+        <span class="dot"></span> 100% Standalone Offline File
+      </span>
+      <span class="badge badge-wakelock" id="badge-wakelock">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+        </svg>
+        Wake Lock Ready
+      </span>
+    </div>
+
+    <!-- Hero Trigger Button -->
+    <section class="trigger-section">
+      <button id="btn-trigger" class="btn-trigger" aria-label="Start Crossing Flasher">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring ring-2"></div>
+        <div class="trigger-inner">
+          <svg class="trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="trigger-text">START CROSSING</span>
+          <span class="trigger-sub">Tap to activate emergency strobe</span>
+        </div>
+      </button>
+      <p class="hint-text">Hold phone facing incoming traffic while crossing</p>
+    </section>
+
+    <!-- Controls & Pattern Selection -->
+    <section class="settings-card">
+      <h2 class="section-title">Light Pattern</h2>
+      <div class="pattern-grid" role="radiogroup">
+        <button class="pattern-btn active" data-pattern="police">
+          <div class="pattern-preview police-preview"></div>
+          <span class="pattern-name">Police Strobe</span>
+          <span class="pattern-desc">Rapid Red & Blue multi-burst</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="split">
+          <div class="pattern-preview split-preview"></div>
+          <span class="pattern-name">Split Alternating</span>
+          <span class="pattern-desc">Dual Red/Blue split screen</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="fullscreen">
+          <div class="pattern-preview fullscreen-preview"></div>
+          <span class="pattern-name">Full Screen Flip</span>
+          <span class="pattern-desc">Alternating full red & blue</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="wigwag">
+          <div class="pattern-preview wigwag-preview">
+            <span class="preview-circle left-circle"></span>
+            <span class="preview-circle right-circle"></span>
+          </div>
+          <span class="pattern-name">Dual Amber Wig-Wag</span>
+          <span class="pattern-desc">Alternating circular hazard lamps</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="white">
+          <div class="pattern-preview white-preview"></div>
+          <span class="pattern-name">White Beacon</span>
+          <span class="pattern-desc">High-lumen flashlight pulse</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="sos">
+          <div class="pattern-preview sos-preview">
+            <span class="sos-morse">··· ——— ···</span>
+          </div>
+          <span class="pattern-name">SOS Morse Distress</span>
+          <span class="pattern-desc">Emergency distress white pulse</span>
+        </button>
+      </div>
+
+      <div class="options-grid">
+        <!-- Speed Setting -->
+        <div class="option-group option-group-full">
+          <label class="option-label">Strobe Speed</label>
+          <div class="segmented-control speed-segmented" id="speed-control">
+            <button class="segment-btn" data-speed="ultraslow">Ultra Slow</button>
+            <button class="segment-btn" data-speed="veryslow">Very Slow</button>
+            <button class="segment-btn" data-speed="slow">Slow</button>
+            <button class="segment-btn active" data-speed="normal">Normal</button>
+            <button class="segment-btn" data-speed="fast">Rapid</button>
+          </div>
+        </div>
+
+        <!-- Text Overlay: Presets (Crossing, Stop) + Custom (in place of None) -->
+        <div class="option-group option-group-full">
+          <div class="option-header">
+            <label class="option-label" for="input-custom-text">Text Overlay</label>
+            <span class="char-counter" id="text-char-count">0/15</span>
+          </div>
+
+          <div class="overlay-control-row">
+            <div class="segmented-control overlay-presets" id="badge-presets">
+              <button type="button" class="segment-btn active" data-preset="CROSSING">CROSSING</button>
+              <button type="button" class="segment-btn" data-preset="STOP">STOP</button>
+            </div>
+            <div class="overlay-custom-wrap">
+              <input 
+                type="text" 
+                id="input-custom-text" 
+                class="overlay-custom-input" 
+                maxlength="15" 
+                placeholder="Custom text (15 max)..."
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="button" id="btn-clear-text" class="btn-clear-input" title="Clear text (no overlay)" aria-label="Clear text" style="display: none;">&times;</button>
+            </div>
+          </div>
+          <span class="input-hint">15 character limit. Leave custom blank for no overlay.</span>
+        </div>
+      </div>
+
+      <!-- Quick Toggles -->
+      <div class="toggles-list">
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Audio Crossing Chirp</span>
+            <span class="toggle-desc">Web audio beeps to alert nearby vehicles</span>
+          </div>
+          <input type="checkbox" id="toggle-sound" class="toggle-switch" checked>
+        </label>
+
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Haptic Vibration</span>
+            <span class="toggle-desc">Pulses phone so you know it's flashing</span>
+          </div>
+          <input type="checkbox" id="toggle-vibration" class="toggle-switch" checked>
+        </label>
+      </div>
+    </section>
+
+    <!-- Offline Help Modal -->
+    <div id="modal-info" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Standalone File Guide</h3>
+          <button id="btn-close-info" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="instruction-block">
+            <h4>Direct File Sharing</h4>
+            <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.5;">You can send this <code>crosssafe.html</code> file directly via WhatsApp, Telegram, AirDrop, or Bluetooth. Anyone who receives it can tap to open it in their browser and bookmark it. It runs 100% offline with zero internet.</p>
+          </div>
+          <div class="instruction-block note-box">
+            <p><strong>Safety Reminder</strong>: Always check both sides of the street before stepping off the curb.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-got-it" class="btn-primary">Got it</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const state = {
+      isActive: false,
+      pattern: 'police',
+      speed: 'normal',
+      textOverlayMode: 'preset', // 'preset' | 'custom'
+      presetText: 'CROSSING',    // 'CROSSING' | 'STOP'
+      customText: '',            // custom string (blank = no overlay)
+      soundEnabled: true,
+      vibrationEnabled: true,
+      wakeLock: null,
+      audioCtx: null,
+      strobeFrame: null,
+      lastTick: 0,
+      stepIndex: 0,
+      lastVibrateTime: 0
+    };
+
+    const SPEED_CONFIGS = {
+      ultraslow: { mult: 3.5 },
+      veryslow:  { mult: 2.2 },
+      slow:      { mult: 1.4 },
+      normal:    { mult: 1.0 },
+      fast:      { mult: 0.65 }
+    };
+
+    const RED = '#ff0019', BLUE = '#0048ff', AMBER = '#ffaa00', WHITE = '#ffffff', BLACK = '#000000';
+
+    function getPatternSequence(pattern) {
+      switch (pattern) {
+        case 'police':
+          return [
+            { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+            { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+            { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 110, chirp: null },
+            { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+            { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+            { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 110, chirp: null }
+          ];
+        case 'split':
+          return [
+            { left: RED,   right: BLACK, duration: 110, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 40,  chirp: null },
+            { left: RED,   right: BLACK, duration: 110, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: BLACK, right: BLUE,  duration: 110, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 40,  chirp: null },
+            { left: BLACK, right: BLUE,  duration: 110, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null }
+          ];
+        case 'fullscreen':
+          return [
+            { left: RED,   right: RED,   duration: 220, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 50,  chirp: null },
+            { left: BLUE,  right: BLUE,  duration: 220, chirp: 'low' },
+            { left: BLACK, right: BLACK, duration: 50,  chirp: null }
+          ];
+        case 'wigwag':
+          // Dual Alternating Amber Circular Beacons (School bus / Road hazard wig-wag)
+          return [
+            { leftLit: true,  rightLit: false, duration: 180, chirp: 'med' },
+            { leftLit: false, rightLit: false, duration: 35,  chirp: null },
+            { leftLit: false, rightLit: true,  duration: 180, chirp: 'med' },
+            { leftLit: false, rightLit: false, duration: 35,  chirp: null }
+          ];
+        case 'white':
+          // High-Lumen White Beacon
+          return [
+            { left: WHITE, right: WHITE, duration: 100, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 60,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 100, chirp: 'high' },
+            { left: BLACK, right: BLACK, duration: 240, chirp: null }
+          ];
+        case 'sos':
+          // International Morse Code Distress: ··· ——— ··· (in White)
+          return [
+            // S: 3 short dots
+            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 240, chirp: null },
+
+            // O: 3 long dashes
+            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+            { left: BLACK, right: BLACK, duration: 240, chirp: null },
+
+            // S: 3 short dots
+            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+            { left: BLACK, right: BLACK, duration: 700, chirp: null }
+          ];
+        default:
+          return getPatternSequence('police');
+      }
+    }
+
+    const elSurface = document.getElementById('strobe-surface');
+    const elLeft = document.getElementById('strobe-left');
+    const elRight = document.getElementById('strobe-right');
+    const beaconLeft = document.getElementById('beacon-left');
+    const beaconRight = document.getElementById('beacon-right');
+    const elBadge = document.getElementById('strobe-badge');
+    const elStrobeText = document.getElementById('strobe-text');
+    const btnTrigger = document.getElementById('btn-trigger');
+    const badgeWakeLock = document.getElementById('badge-wakelock');
+    const patternButtons = document.querySelectorAll('.pattern-btn');
+    const speedButtons = document.querySelectorAll('#speed-control .segment-btn');
+    const presetButtons = document.querySelectorAll('#badge-presets .segment-btn');
+    const inputCustomText = document.getElementById('input-custom-text');
+    const textCharCount = document.getElementById('text-char-count');
+    const btnClearText = document.getElementById('btn-clear-text');
+    const toggleSound = document.getElementById('toggle-sound');
+    const toggleVibration = document.getElementById('toggle-vibration');
+    const btnInfo = document.getElementById('btn-info');
+    const modalInfo = document.getElementById('modal-info');
+    const btnCloseInfo = document.getElementById('btn-close-info');
+    const btnGotIt = document.getElementById('btn-got-it');
+
+    function initAudio() {
+      if (!state.audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) state.audioCtx = new AudioCtx();
+      }
+      if (state.audioCtx && state.audioCtx.state === 'suspended') {
+        state.audioCtx.resume();
+      }
+    }
+
+    function playAlertChirp(type) {
+      if (!state.soundEnabled || !state.audioCtx) return;
+      try {
+        const ctx = state.audioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const startTime = ctx.currentTime;
+        let startFreq = 880, endFreq = 1200;
+        let toneDuration = 0.06;
+        let oscType = 'sawtooth';
+
+        if (type === 'low') {
+          startFreq = 540; endFreq = 720;
+        } else if (type === 'med') {
+          startFreq = 720; endFreq = 880;
+        } else if (type === 'dot') {
+          startFreq = 850; endFreq = 850;
+          toneDuration = 0.055;
+          oscType = 'sine';
+        } else if (type === 'dash') {
+          startFreq = 850; endFreq = 850;
+          toneDuration = 0.18;
+          oscType = 'sine';
+        }
+
+        osc.type = oscType;
+        osc.frequency.setValueAtTime(startFreq, startTime);
+        if (startFreq !== endFreq) {
+          osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + toneDuration * 0.8);
+        }
+
+        gain.gain.setValueAtTime(0.2, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + toneDuration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + toneDuration + 0.005);
+      } catch (e) {}
+    }
+
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          state.wakeLock = await navigator.wakeLock.request('screen');
+          if (badgeWakeLock) badgeWakeLock.style.color = 'var(--accent-green)';
+        } catch (err) {}
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (state.wakeLock) {
+        try { await state.wakeLock.release(); } catch (e) {}
+        state.wakeLock = null;
+      }
+    }
+
+    function triggerHapticPulse() {
+      if (!state.vibrationEnabled || !('vibrate' in navigator)) return;
+      const now = performance.now();
+      if (now - state.lastVibrateTime > 750) {
+        try {
+          navigator.vibrate([40, 50, 40]);
+          state.lastVibrateTime = now;
+        } catch (e) {}
+      }
+    }
+
+    function runStrobeEngine(timestamp) {
+      if (!state.isActive) return;
+      const sequence = getPatternSequence(state.pattern);
+      const speedMult = SPEED_CONFIGS[state.speed].mult;
+      const currentStep = sequence[state.stepIndex % sequence.length];
+      const stepDuration = currentStep.duration * speedMult;
+
+      if (!state.lastTick) state.lastTick = timestamp;
+      const elapsed = timestamp - state.lastTick;
+
+      if (elapsed >= stepDuration) {
+        state.stepIndex = (state.stepIndex + 1) % sequence.length;
+        state.lastTick = timestamp;
+        const nextStep = sequence[state.stepIndex];
+
+        if (state.pattern === 'wigwag') {
+          if (beaconLeft && beaconRight) {
+            if (nextStep.leftLit) {
+              beaconLeft.classList.add('lit');
+              beaconLeft.classList.remove('unlit');
+            } else {
+              beaconLeft.classList.remove('lit');
+              beaconLeft.classList.add('unlit');
+            }
+
+            if (nextStep.rightLit) {
+              beaconRight.classList.add('lit');
+              beaconRight.classList.remove('unlit');
+            } else {
+              beaconRight.classList.remove('lit');
+              beaconRight.classList.add('unlit');
+            }
+          }
+        } else {
+          elLeft.style.backgroundColor = nextStep.left;
+          elRight.style.backgroundColor = nextStep.right;
+        }
+
+        if (nextStep.chirp) playAlertChirp(nextStep.chirp);
+        triggerHapticPulse();
+      }
+
+      state.strobeFrame = requestAnimationFrame(runStrobeEngine);
+    }
+
+    function startCrossing() {
+      initAudio();
+      requestWakeLock();
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+
+      // Toggle circular beacons vs split halves
+      elSurface.classList.toggle('mode-circular', state.pattern === 'wigwag');
+
+      // Configure Text Overlay: Presets (Crossing, Stop) or Custom (blank = none)
+      let overlayText = '';
+      if (state.textOverlayMode === 'preset') {
+        overlayText = state.presetText;
+      } else {
+        overlayText = (state.customText || '').trim();
+      }
+
+      if (!overlayText) {
+        elSurface.classList.remove('show-badge');
+      } else {
+        const displayText = (state.pattern === 'sos' && overlayText.toUpperCase() === 'CROSSING') ? 'SOS' : overlayText.toUpperCase();
+        elStrobeText.textContent = displayText;
+        elSurface.classList.add('show-badge');
+      }
+      state.isActive = true;
+      state.stepIndex = 0;
+      state.lastTick = 0;
+      state.lastVibrateTime = 0;
+      elSurface.classList.remove('hidden');
+      elSurface.setAttribute('aria-hidden', 'false');
+      state.strobeFrame = requestAnimationFrame(runStrobeEngine);
+    }
+
+    function stopCrossing() {
+      state.isActive = false;
+      if (state.strobeFrame) {
+        cancelAnimationFrame(state.strobeFrame);
+        state.strobeFrame = null;
+      }
+      elSurface.classList.add('hidden');
+      elSurface.setAttribute('aria-hidden', 'true');
+      elSurface.classList.remove('mode-circular');
+      elLeft.style.backgroundColor = BLACK;
+      elRight.style.backgroundColor = BLACK;
+
+      if (beaconLeft && beaconRight) {
+        beaconLeft.classList.remove('lit');
+        beaconLeft.classList.add('unlit');
+        beaconRight.classList.remove('lit');
+        beaconRight.classList.add('unlit');
+      }
+
+      releaseWakeLock();
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    btnTrigger.addEventListener('click', startCrossing);
+    elSurface.addEventListener('click', stopCrossing);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        state.isActive ? stopCrossing() : startCrossing();
+      } else if (e.code === 'Escape' && state.isActive) {
+        stopCrossing();
+      }
+    });
+
+    patternButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        patternButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.pattern = btn.dataset.pattern;
+      });
+    });
+
+    speedButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        speedButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.speed = btn.dataset.speed;
+      });
+    });
+
+    // Preset Overlay Buttons (CROSSING, STOP)
+    presetButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.textOverlayMode = 'preset';
+        state.presetText = btn.dataset.preset;
+        presetButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (inputCustomText) {
+          inputCustomText.classList.remove('active');
+        }
+      });
+    });
+
+    // Custom Text Overlay Input & Character Counter (15 chars max, blank = none)
+    if (inputCustomText) {
+      const updateCustomText = () => {
+        let val = inputCustomText.value;
+        if (val.length > 15) {
+          val = val.slice(0, 15);
+          inputCustomText.value = val;
+        }
+        state.customText = val;
+        state.textOverlayMode = 'custom';
+        presetButtons.forEach((b) => b.classList.remove('active'));
+        inputCustomText.classList.add('active');
+
+        if (textCharCount) {
+          textCharCount.textContent = `${val.length}/15`;
+        }
+        if (btnClearText) {
+          btnClearText.style.display = val.length > 0 ? 'flex' : 'none';
+        }
+      };
+
+      inputCustomText.addEventListener('focus', updateCustomText);
+      inputCustomText.addEventListener('input', updateCustomText);
+    }
+
+    if (btnClearText) {
+      btnClearText.addEventListener('click', () => {
+        if (inputCustomText) {
+          inputCustomText.value = '';
+          state.customText = '';
+          state.textOverlayMode = 'custom';
+          presetButtons.forEach((b) => b.classList.remove('active'));
+          inputCustomText.classList.add('active');
+
+          if (textCharCount) {
+            textCharCount.textContent = '0/15';
+          }
+          btnClearText.style.display = 'none';
+          inputCustomText.focus();
+        }
+      });
+    }
+
+    toggleSound.addEventListener('change', e => {
+      state.soundEnabled = e.target.checked;
+      if (state.soundEnabled) initAudio();
+    });
+
+    toggleVibration.addEventListener('change', e => {
+      state.vibrationEnabled = e.target.checked;
+    });
+
+    btnInfo.addEventListener('click', () => modalInfo.classList.remove('hidden'));
+    btnCloseInfo.addEventListener('click', () => modalInfo.classList.add('hidden'));
+    btnGotIt.addEventListener('click', () => modalInfo.classList.add('hidden'));
+    modalInfo.querySelector('.modal-backdrop').addEventListener('click', () => modalInfo.classList.add('hidden'));
+  })();
+  </script>
+</body>
+</html>

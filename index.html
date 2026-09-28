@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0d14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CrossSafe">
+  <meta name="description" content="Offline-first road crossing assistant with high-visibility emergency strobe hazard lights.">
+  <title>CrossSafe - Road Crossing Assist</title>
+  
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Strobe Light Surface (Full Screen Overlay) -->
+  <div id="strobe-surface" class="strobe-surface hidden" aria-hidden="true">
+    <div id="strobe-left" class="strobe-half left"></div>
+    <div id="strobe-right" class="strobe-half right"></div>
+    
+    <!-- Dual Circular Beacons (Dual Amber Wig-Wag Mode) -->
+    <div id="circular-beacons" class="circular-beacons-container">
+      <div id="beacon-left" class="beacon-pod unlit">
+        <div class="beacon-housing">
+          <div class="beacon-lens">
+            <div class="beacon-core"></div>
+            <div class="beacon-rings"></div>
+          </div>
+        </div>
+      </div>
+      <div id="beacon-right" class="beacon-pod unlit">
+        <div class="beacon-housing">
+          <div class="beacon-lens">
+            <div class="beacon-core"></div>
+            <div class="beacon-rings"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="strobe-badge" class="strobe-badge">
+      <span id="strobe-text">PEDESTRIAN CROSSING</span>
+    </div>
+    <div class="strobe-dismiss-hint">
+      <span>TAP ANYWHERE OR PRESS ESC TO STOP</span>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <main class="app-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <div>
+          <h1 class="app-title">CrossSafe</h1>
+          <p class="app-tagline">Offline Road Crossing Assist</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-share" class="icon-btn" title="Share with friends" aria-label="Share">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </button>
+        <button id="btn-info" class="icon-btn" title="Offline setup & help" aria-label="Help">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Status Banner -->
+    <div class="status-bar">
+      <span class="badge badge-offline" id="badge-offline">
+        <span class="dot"></span> 100% Offline Ready
+      </span>
+      <span class="badge badge-wakelock" id="badge-wakelock" title="Keeps your screen bright and awake while crossing">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+        </svg>
+        Wake Lock Active
+      </span>
+    </div>
+
+    <!-- Hero Trigger Button -->
+    <section class="trigger-section">
+      <button id="btn-trigger" class="btn-trigger" aria-label="Start Crossing Flasher">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring ring-2"></div>
+        <div class="trigger-inner">
+          <svg class="trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="trigger-text">START CROSSING</span>
+          <span class="trigger-sub">Tap to activate emergency strobe</span>
+        </div>
+      </button>
+      <p class="hint-text">Hold phone facing incoming traffic while crossing</p>
+    </section>
+
+    <!-- Controls & Pattern Selection -->
+    <section class="settings-card">
+      <h2 class="section-title">Light Pattern</h2>
+      <div class="pattern-grid" role="radiogroup" aria-label="Select strobe pattern">
+        <button class="pattern-btn active" data-pattern="police">
+          <div class="pattern-preview police-preview"></div>
+          <span class="pattern-name">Police Strobe</span>
+          <span class="pattern-desc">Rapid Red & Blue multi-burst</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="split">
+          <div class="pattern-preview split-preview"></div>
+          <span class="pattern-name">Split Alternating</span>
+          <span class="pattern-desc">Dual Red/Blue split screen</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="fullscreen">
+          <div class="pattern-preview fullscreen-preview"></div>
+          <span class="pattern-name">Full Screen Flip</span>
+          <span class="pattern-desc">Alternating full red & blue</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="wigwag">
+          <div class="pattern-preview wigwag-preview">
+            <span class="preview-circle left-circle"></span>
+            <span class="preview-circle right-circle"></span>
+          </div>
+          <span class="pattern-name">Dual Amber Wig-Wag</span>
+          <span class="pattern-desc">Alternating circular hazard lamps</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="white">
+          <div class="pattern-preview white-preview"></div>
+          <span class="pattern-name">White Beacon</span>
+          <span class="pattern-desc">High-lumen flashlight pulse</span>
+        </button>
+
+        <button class="pattern-btn" data-pattern="sos">
+          <div class="pattern-preview sos-preview">
+            <span class="sos-morse">··· ——— ···</span>
+          </div>
+          <span class="pattern-name">SOS Morse Distress</span>
+          <span class="pattern-desc">Emergency distress white pulse</span>
+        </button>
+      </div>
+
+      <div class="options-grid">
+        <!-- Speed Setting -->
+        <div class="option-group option-group-full">
+          <label class="option-label" for="speed-select">Strobe Speed</label>
+          <div class="segmented-control speed-segmented" id="speed-control">
+            <button class="segment-btn" data-speed="ultraslow">Ultra Slow</button>
+            <button class="segment-btn" data-speed="veryslow">Very Slow</button>
+            <button class="segment-btn" data-speed="slow">Slow</button>
+            <button class="segment-btn active" data-speed="normal">Normal</button>
+            <button class="segment-btn" data-speed="fast">Rapid</button>
+          </div>
+        </div>
+
+        <!-- Text Overlay: Presets (Crossing, Stop) + Custom (in place of None) -->
+        <div class="option-group option-group-full">
+          <div class="option-header">
+            <label class="option-label" for="input-custom-text">Text Overlay</label>
+            <span class="char-counter" id="text-char-count">0/15</span>
+          </div>
+
+          <div class="overlay-control-row">
+            <div class="segmented-control overlay-presets" id="badge-presets">
+              <button type="button" class="segment-btn active" data-preset="CROSSING">CROSSING</button>
+              <button type="button" class="segment-btn" data-preset="STOP">STOP</button>
+            </div>
+            <div class="overlay-custom-wrap">
+              <input 
+                type="text" 
+                id="input-custom-text" 
+                class="overlay-custom-input" 
+                maxlength="15" 
+                placeholder="Custom text (15 max)..."
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="button" id="btn-clear-text" class="btn-clear-input" title="Clear text (no overlay)" aria-label="Clear text" style="display: none;">&times;</button>
+            </div>
+          </div>
+          <span class="input-hint">15 character limit. Leave custom blank for no overlay.</span>
+        </div>
+      </div>
+
+      <!-- Quick Toggles -->
+      <div class="toggles-list">
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Audio Crossing Chirp</span>
+            <span class="toggle-desc">Web audio beeps to alert nearby vehicles</span>
+          </div>
+          <input type="checkbox" id="toggle-sound" class="toggle-switch" checked>
+        </label>
+
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Haptic Vibration</span>
+            <span class="toggle-desc">Pulses phone so you know it's flashing</span>
+          </div>
+          <input type="checkbox" id="toggle-vibration" class="toggle-switch" checked>
+        </label>
+
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Auto Max Brightness Hint</span>
+            <span class="toggle-desc">Reminds you to crank display brightness</span>
+          </div>
+          <input type="checkbox" id="toggle-brightness-hint" class="toggle-switch" checked>
+        </label>
+      </div>
+    </section>
+
+    <!-- Offline & Install Guide Modal -->
+    <div id="modal-info" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-info-title">How to Save & Use Offline</h3>
+          <button id="btn-close-info" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="instruction-block">
+            <h4><span class="icon">🍎</span> On iPhone (Safari)</h4>
+            <ol>
+              <li>Open this page in <strong>Safari</strong>.</li>
+              <li>Tap the <strong>Share</strong> button at the bottom (box with arrow pointing up).</li>
+              <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+              <li>CrossSafe now lives on your home screen and opens instantly with <strong>zero internet or data needed</strong>.</li>
+            </ol>
+          </div>
+
+          <div class="instruction-block">
+            <h4><span class="icon">🤖</span> On Android (Chrome / Brave / Edge)</h4>
+            <ol>
+              <li>Open this page in <strong>Chrome</strong>.</li>
+              <li>Tap the three dots menu (top right) and select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+              <li>Confirm installation. The app will work completely offline forever.</li>
+            </ol>
+          </div>
+
+          <div class="instruction-block note-box">
+            <p><strong>Safety Note</strong>: Hold your phone firmly at chest height facing oncoming vehicles so drivers see the strobe from afar. Always look both ways before stepping onto the roadway.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-got-it" class="btn-primary">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="modal-share" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-share-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-share-title">Share CrossSafe</h3>
+          <button id="btn-close-share" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body text-center">
+          <p>Scan this QR code with any phone camera to open and save this app instantly:</p>
+          <div id="qr-container" class="qr-container"></div>
+          <div class="share-actions">
+            <button id="btn-native-share" class="btn-primary">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              Share Link Directly
+            </button>
+            <button id="btn-copy-link" class="btn-secondary">Copy Link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
