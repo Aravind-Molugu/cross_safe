@@ -551,9 +551,6 @@
       if (textCharCount) {
         textCharCount.textContent = `${val.length}/15`;
       }
-      if (btnClearText) {
-        btnClearText.style.display = val.length > 0 ? 'flex' : 'none';
-      }
     };
 
     inputCustomText.addEventListener('focus', () => {
@@ -565,8 +562,11 @@
     });
   }
 
+  // One-touch Clear Text button ('x')
   if (btnClearText) {
-    btnClearText.addEventListener('click', () => {
+    btnClearText.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (inputCustomText) {
         inputCustomText.value = '';
         state.customText = '';
@@ -577,7 +577,9 @@
         if (textCharCount) {
           textCharCount.textContent = '0/15';
         }
-        btnClearText.style.display = 'none';
+        if (navigator.vibrate && state.vibrationEnabled) {
+          try { navigator.vibrate(30); } catch (_) {}
+        }
         inputCustomText.focus();
       }
     });

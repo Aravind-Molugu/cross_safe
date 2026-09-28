@@ -100,6 +100,7 @@ http://<YOUR_LAPTOP_IP>:8080
 | **Speed Control** | Smooth transition across 5 speed levels: Ultra Slow (~0.5 Hz), Very Slow (~1.0 Hz), Slow (~1.5 Hz), Normal (~4.0 Hz), Rapid (~8.0 Hz) | [ ] |
 | **Audio Toggle** | Synthesized crossing chirp plays on click/tap | [ ] |
 | **Vibration** | Haptic pulse fires periodically on supported mobile browsers | [ ] |
+| **One-Touch Clear ('×')** | Tapping the '×' button inside the custom text box immediately clears text to blank, resets counter to 0/15, and sets overlay to None | [ ] |
 | **Max Brightness Hint** | When enabled, a reminder banner appears at the top of the strobe screen and auto-fades after 3.5s; when toggle is OFF, the reminder is strictly suppressed | [ ] |
 | **Triple Tap to Stop** | Tap 1 shows "Tap 2 more times to stop" pill + haptic buzz; Tap 2 shows "Tap 1 more time to stop"; Tap 3 stops crossing and returns to home screen | [ ] |
 | **Tap Accidental Timeout** | Tapping once or twice and pausing >800ms resets the counter and keeps flashing active | [ ] |

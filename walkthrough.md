@@ -54,6 +54,10 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 ### Auto Max Brightness Hint Toggle Fix
 - Strobe screen brightness reminder banner strictly respects the settings toggle (`toggleBrightnessHint.checked`) on startup and during crossing activation. When switched OFF, the reminder is completely suppressed.
 
+### One-Touch Clear ('×') Button
+- A dedicated, always-accessible circular `×` icon button is embedded inside the custom text box.
+- Tapping `×` performs a one-touch clear: sets custom text to blank, resets the live counter to `0/15`, deactivates presets, and suppresses the strobe text overlay (None mode) with physical haptic confirmation.
+
 ---
 
 ## Verification Results
