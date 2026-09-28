@@ -144,6 +144,8 @@
   const beaconRight = document.getElementById('beacon-right');
   const elBadge = document.getElementById('strobe-badge');
   const elStrobeText = document.getElementById('strobe-text');
+  const elBrightnessToast = document.getElementById('brightness-toast');
+  let brightnessToastTimer = null;
 
   const btnTrigger = document.getElementById('btn-trigger');
   const badgeWakeLock = document.getElementById('badge-wakelock');
@@ -364,6 +366,20 @@
       elSurface.classList.add('show-badge');
     }
 
+    // Show Auto Max Brightness Hint Toast if enabled
+    if (state.brightnessHintEnabled && elBrightnessToast) {
+      if (brightnessToastTimer) clearTimeout(brightnessToastTimer);
+      elBrightnessToast.classList.remove('hidden', 'toast-fade');
+      brightnessToastTimer = setTimeout(() => {
+        elBrightnessToast.classList.add('toast-fade');
+        setTimeout(() => {
+          elBrightnessToast.classList.add('hidden');
+        }, 500);
+      }, 3500);
+    } else if (elBrightnessToast) {
+      elBrightnessToast.classList.add('hidden');
+    }
+
     state.isActive = true;
     state.stepIndex = 0;
     state.lastTick = 0;
@@ -380,6 +396,14 @@
     if (state.strobeFrame) {
       cancelAnimationFrame(state.strobeFrame);
       state.strobeFrame = null;
+    }
+
+    if (brightnessToastTimer) {
+      clearTimeout(brightnessToastTimer);
+      brightnessToastTimer = null;
+    }
+    if (elBrightnessToast) {
+      elBrightnessToast.classList.add('hidden');
     }
 
     elSurface.classList.add('hidden');

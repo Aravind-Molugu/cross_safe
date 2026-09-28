@@ -194,6 +194,43 @@
       0%, 100% { opacity: 0.6; }
       50% { opacity: 1; }
     }
+    .brightness-toast {
+      position: absolute;
+      top: calc(24px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.88);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fffae6;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      pointer-events: none;
+      animation: fadeInDown 0.3s ease-out;
+      transition: opacity 0.5s ease;
+      white-space: nowrap;
+    }
+    .brightness-toast.toast-fade {
+      opacity: 0;
+    }
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -12px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
     .app-container {
       max-width: 520px;
       margin: 0 auto;
@@ -784,6 +821,21 @@
       </div>
     </div>
 
+    <div id="brightness-toast" class="brightness-toast hidden">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <span>Set screen brightness to MAX for best visibility</span>
+    </div>
+
     <div id="strobe-badge" class="strobe-badge">
       <span id="strobe-text">PEDESTRIAN CROSSING</span>
     </div>
@@ -953,6 +1005,14 @@
           </div>
           <input type="checkbox" id="toggle-vibration" class="toggle-switch" checked>
         </label>
+
+        <label class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Auto Max Brightness Hint</span>
+            <span class="toggle-desc">Reminds you to crank display brightness</span>
+          </div>
+          <input type="checkbox" id="toggle-brightness-hint" class="toggle-switch" checked>
+        </label>
       </div>
     </section>
 
@@ -992,6 +1052,7 @@
       customText: '',            // custom string (blank = no overlay)
       soundEnabled: true,
       vibrationEnabled: true,
+      brightnessHintEnabled: true,
       wakeLock: null,
       audioCtx: null,
       strobeFrame: null,
@@ -1100,6 +1161,8 @@
     const beaconRight = document.getElementById('beacon-right');
     const elBadge = document.getElementById('strobe-badge');
     const elStrobeText = document.getElementById('strobe-text');
+    const elBrightnessToast = document.getElementById('brightness-toast');
+    let brightnessToastTimer = null;
     const btnTrigger = document.getElementById('btn-trigger');
     const badgeWakeLock = document.getElementById('badge-wakelock');
     const patternButtons = document.querySelectorAll('.pattern-btn');
@@ -1110,6 +1173,7 @@
     const btnClearText = document.getElementById('btn-clear-text');
     const toggleSound = document.getElementById('toggle-sound');
     const toggleVibration = document.getElementById('toggle-vibration');
+    const toggleBrightnessHint = document.getElementById('toggle-brightness-hint');
     const btnInfo = document.getElementById('btn-info');
     const modalInfo = document.getElementById('modal-info');
     const btnCloseInfo = document.getElementById('btn-close-info');
@@ -1263,6 +1327,20 @@
         elStrobeText.textContent = displayText;
         elSurface.classList.add('show-badge');
       }
+      // Show Auto Max Brightness Hint Toast if enabled
+      if (state.brightnessHintEnabled && elBrightnessToast) {
+        if (brightnessToastTimer) clearTimeout(brightnessToastTimer);
+        elBrightnessToast.classList.remove('hidden', 'toast-fade');
+        brightnessToastTimer = setTimeout(() => {
+          elBrightnessToast.classList.add('toast-fade');
+          setTimeout(() => {
+            elBrightnessToast.classList.add('hidden');
+          }, 500);
+        }, 3500);
+      } else if (elBrightnessToast) {
+        elBrightnessToast.classList.add('hidden');
+      }
+
       state.isActive = true;
       state.stepIndex = 0;
       state.lastTick = 0;
@@ -1277,6 +1355,13 @@
       if (state.strobeFrame) {
         cancelAnimationFrame(state.strobeFrame);
         state.strobeFrame = null;
+      }
+      if (brightnessToastTimer) {
+        clearTimeout(brightnessToastTimer);
+        brightnessToastTimer = null;
+      }
+      if (elBrightnessToast) {
+        elBrightnessToast.classList.add('hidden');
       }
       elSurface.classList.add('hidden');
       elSurface.setAttribute('aria-hidden', 'true');
@@ -1389,6 +1474,12 @@
     toggleVibration.addEventListener('change', e => {
       state.vibrationEnabled = e.target.checked;
     });
+
+    if (toggleBrightnessHint) {
+      toggleBrightnessHint.addEventListener('change', e => {
+        state.brightnessHintEnabled = e.target.checked;
+      });
+    }
 
     btnInfo.addEventListener('click', () => modalInfo.classList.remove('hidden'));
     btnCloseInfo.addEventListener('click', () => modalInfo.classList.add('hidden'));

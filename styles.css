@@ -218,6 +218,46 @@ body {
   50% { opacity: 1; }
 }
 
+.brightness-toast {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fffae6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  pointer-events: none;
+  animation: fadeInDown 0.3s ease-out;
+  transition: opacity 0.5s ease;
+  white-space: nowrap;
+}
+
+.brightness-toast.toast-fade {
+  opacity: 0;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ==========================================================================
    App Container & Header
    ========================================================================== */
