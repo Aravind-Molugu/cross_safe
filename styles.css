@@ -93,6 +93,34 @@ body {
   height: min(48.5vh, 96vw) !important;
 }
 
+/* Desktop / Laptop Testing Emulation: Constrain Portrait to Centered Phone Pillar */
+.strobe-surface.desktop-sim-portrait {
+  max-width: 440px !important;
+  width: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.95), 0 0 0 100vw rgba(5, 5, 8, 0.92) !important;
+  border-left: 2px solid #2a2a32;
+  border-right: 2px solid #2a2a32;
+}
+
+.strobe-surface.desktop-sim-portrait .circular-beacons-container {
+  max-width: 440px !important;
+  width: 100% !important;
+  flex-direction: column !important;
+  justify-content: space-evenly !important;
+}
+
+.strobe-surface.desktop-sim-portrait .beacon-pod {
+  width: min(72vw, 42vh, 320px) !important;
+  height: min(72vw, 42vh, 320px) !important;
+}
+
+.strobe-surface.desktop-sim-portrait .strobe-badge {
+  font-size: clamp(1.4rem, 4vw, 2.2rem) !important;
+  padding: 12px 20px !important;
+}
+
 .strobe-half {
   flex: 1;
   height: 100%;
@@ -701,27 +729,90 @@ body {
 
 .wigwag-preview {
   background: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .preview-circle {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #2b1800;
-  border: 1.5px solid #ffaa00;
+  border: 1px solid #ffaa00;
+  transition: all 0.1s ease;
 }
 
 .preview-circle.left-circle {
-  background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
-  box-shadow: 0 0 8px #ffaa00;
+  animation: miniWigWagLeft 0.9s infinite ease-in-out;
+}
+
+.preview-circle.right-circle {
+  animation: miniWigWagRight 0.9s infinite ease-in-out;
+}
+
+@keyframes miniWigWagLeft {
+  0%, 46% {
+    background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+    box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
+    opacity: 1;
+    border-color: #ffe680;
+  }
+  50%, 96% {
+    background: #241300;
+    box-shadow: none;
+    opacity: 0.35;
+    border-color: #663b00;
+  }
+  98%, 100% {
+    background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+    box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
+    opacity: 1;
+    border-color: #ffe680;
+  }
+}
+
+@keyframes miniWigWagRight {
+  0%, 46% {
+    background: #241300;
+    box-shadow: none;
+    opacity: 0.35;
+    border-color: #663b00;
+  }
+  50%, 96% {
+    background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+    box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
+    opacity: 1;
+    border-color: #ffe680;
+  }
+  98%, 100% {
+    background: #241300;
+    box-shadow: none;
+    opacity: 0.35;
+    border-color: #663b00;
+  }
 }
 
 .white-preview {
-  background: #ffffff;
+  background: #0d0d12;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: miniWhiteBeacon 0.9s infinite ease-in-out;
+}
+
+@keyframes miniWhiteBeacon {
+  0%, 40% {
+    background: #ffffff;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
+  }
+  50%, 90% {
+    background: #222228;
+    box-shadow: none;
+  }
+  100% {
+    background: #ffffff;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
+  }
 }
 
 .sos-preview {
@@ -1154,4 +1245,17 @@ body {
 
 .text-center {
   text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .police-preview,
+  .split-half,
+  .fullscreen-preview,
+  .preview-circle.left-circle,
+  .preview-circle.right-circle,
+  .white-preview,
+  .pulse-ring,
+  .strobe-dismiss-hint {
+    animation: none !important;
+  }
 }

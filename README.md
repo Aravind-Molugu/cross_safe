@@ -18,6 +18,10 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
   * **White Beacon**: High-lumen pulsing pedestrian flashlight.
 * **Animated Micro-Strobe Previews**: Intuitive live CSS-animated previews on the selector tiles showing real-time cadences (Police Strobe quad-burst, Split Alternating dual halves, Full Screen alternating flips, and Wig-Wag blinking circles) so users immediately recognize each mode.
 * **In-App Screen Orientation Toggle**: One-tap toggle directly in the header to switch between Portrait and Landscape modes with zero reliance on cumbersome OS device orientation locks. Eliminates disruptive accidental screen rotation reloads when waving or moving your hand during crossings (includes hardware-accelerated 90° rotation fallback on iOS Safari).
+* **Desktop & Laptop Testing Emulation**: When tested on desktop or laptop monitors, selecting **Portrait** mode renders the active strobe inside a centered, sleek mobile phone pillar preview, while **Landscape** mode expands across the full widescreen display.
+* **Live Animated Pattern Previews**: Selector tiles feature GPU-accelerated CSS micro-animations for Police Strobe, Split Alternating, Full Screen Flip, Dual Amber Wig-Wag, and White Beacon.
+* **Session & Settings Persistence**: Automatically saves all user selections (strobe pattern, cadence speed, preset or custom text overlay, orientation, audio, vibration, and brightness hints) via client-side `localStorage`.
+* **Clean Full-Viewport Strobe (Zero Pop-ups)**: Option C pure CSS viewport coverage eliminates Android OS fullscreen exit security toasts and screen flicker upon exit.
 * **Screen Wake Lock API**: Prevents your phone screen from dimming or sleeping while crossing.
 * **Tactile Haptic Feedback**: Periodic subtle vibration pulses confirm the strobe is flashing while holding the screen faced towards oncoming cars.
 * **Web Audio Alert**: Synthesized audio chirps alert drivers without downloading any sound files.
@@ -57,6 +61,16 @@ Simply double-click `crosssafe.html` in your file explorer to open it in Chrome,
 2. Open `http://localhost:8080` in Chrome or Edge.
 3. Press `F12` and click the **Device Toolbar icon** (`Ctrl + Shift + M`) to simulate an iPhone 14 or Galaxy S20.
 4. Go to **Application** $\rightarrow$ **Service Workers** $\rightarrow$ check **Offline**. Refresh the page to see it run completely offline!
+
+### 3. Run Automated Unit Tests (Zero Bloat)
+Before committing or deploying, run the instant unit testing suite locally:
+* **Command Line (Python)**:
+  ```powershell
+  python tests/test_crosssafe.py
+  ```
+* **In-Browser Visual Test Runner**:
+  Double-click `tests/runner.html` in File Explorer or navigate to `http://localhost:8080/tests/runner.html` to run 15+ interactive behavioral tests directly in Chrome/Edge with live visual reporting.
+* **GitHub Actions CI**: Every `git push` automatically runs tests in the cloud via `.github/workflows/test.yml` before deploying to GitHub Pages.
 
 *(See [TESTING_GUIDE.md](TESTING_GUIDE.md) for full details)*
 

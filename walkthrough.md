@@ -64,14 +64,51 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 - **Hardware-Accelerated Fallback**: Automatically invokes the `screen.orientation.lock('landscape')` API on Android/Chromium browsers, and gracefully applies a zero-lag 90° clockwise CSS transform (`.force-landscape`) on iOS Safari/WebKit devices.
 - **Persistence**: User preference is preserved in `localStorage` across page reloads and app restarts.
 
-### Animated Micro-Strobe Previews (Item #3)
+### Desktop/Laptop Testing Emulation for Orientation Toggle (Item #5)
+- **Problem Solved**: On desktop and laptop monitors, the screen cannot physically rotate and `screen.orientation.lock` is unsupported. Previously, clicking the orientation button updated the icon but produced zero visible difference when starting the strobe on a widescreen monitor.
+- **Centered Phone Pillar Emulation**:
+  - When running on a widescreen desktop/laptop display (`window.innerWidth > window.innerHeight`), selecting **Portrait** mode constrains the active strobe to an upright mobile phone preview pillar (`max-width: 440px`, centered with deep shadows and dark side-gutter shrouds).
+  - Selecting **Landscape** mode removes the constraint, allowing the strobe to expand across 100% of the widescreen monitor.
+  - Zero mobile regression: on physical phones, the verified native hardware orientation lock and iOS virtual rotation logic remain 100% untouched.
+
+### Animated Micro-Strobe Previews (Item #3 & #6)
 - **Problem Solved**: Previously, Police Strobe, Split Alternating, and Full Screen Flip used static or identical preview icons, causing ambiguity about what cadence each mode produced.
 - **Live CSS Animations**:
   - **Police Strobe**: Multi-pulse red burst followed by multi-pulse blue burst.
   - **Split Alternating**: Dual split halves separated by a distinct vertical divider, alternating Left-Red then Right-Blue.
   - **Full Screen Flip**: Rapid whole-surface alternating red/blue flash.
-  - **Amber Wig-Wag**: Alternating circular beacon pulses.
-- **Zero Overhead**: Pure CSS keyframe animations running on GPU layers without JavaScript setInterval overhead.
+  - **Amber Wig-Wag**: Alternating circular beacon pulses with radial glow.
+  - **White Beacon**: Rhythmic high-lumen pulsing flashlight flare.
+  - **SOS Morse**: Static high-contrast typography.
+- **Zero Overhead**: Pure CSS keyframe animations running on GPU layers without JavaScript setInterval overhead, with `@media (prefers-reduced-motion)` support.
+
+### Session State & User Settings Persistence (Item #7)
+- **Problem Solved**: Previously, refreshing or reopening the PWA reset all customizations back to factory defaults.
+- **Unified Engine (`crosssafe_settings_v1`)**:
+  - Automatically captures and serializes `pattern`, `speed`, `textOverlayMode`, `presetText`, `customText`, `soundEnabled`, `vibrationEnabled`, `brightnessHintEnabled`, and `orientation`.
+  - Restores selections and synchronizes the DOM immediately on page load (`syncDOMWithState()`).
+  - Safely falls back to legacy `crosssafe_orientation` preference for seamless upgrade continuity.
+  - Fully sandboxed against private browsing or storage quota errors.
+
+### Clean Full-Viewport Strobe: Zero Android Pop-ups (Item #8 - Option C)
+- **Problem Solved**: On Android, triggering fullscreen via JS displayed an unwanted OS security prompt: *"aravind-molugu.github.io — to exit full screen, drag from the top and touch the back button"* over the active strobe, and stopping caused a jarring viewport reflow.
+- **Pure CSS Standalone Architecture**:
+  - Removed programmatic `requestFullscreen()` and `exitFullscreen()` calls from JavaScript.
+  - The strobe surface seamlessly covers 100% of the viewport via existing hardware-accelerated CSS (`position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 999999;`).
+  - Result: 100% clean, instant strobe activation with zero Android OS exit toasts, no screen resizing flash, and an unobstructed system status bar (clock/battery) at the top.
+
+### Automated Unit Testing Suite & CI Regression Safety (Item #9 `[CONTD]`)
+- **Problem Solved**: Manual browser checks on every change are slow and error-prone. We established automated "Shift-Left" testing to catch regressions locally before committing, plus an automated cloud CI gatekeeper.
+- **Zero-Bloat Architecture**:
+  - Test suites (`tests/`, `package.json`, `.github/`) are strictly excluded from `ASSETS_TO_CACHE` in [sw.js](file:///c:/Users/moluguaravind\road_cross_assist/sw.js).
+  - Pedestrian phones downloading the PWA install the exact same lightweight footprint with **0 bytes** of test overhead.
+  - `node_modules/` is excluded via [.gitignore](file:///c:/Users/moluguaravind\road_cross_assist/.gitignore).
+- **Multi-Tiered Test Runners**:
+  1. **Python Standard Library Suite** ([test_crosssafe.py](file:///c:/Users/moluguaravind\road_cross_assist/tests/test_crosssafe.py)): Executes 15 structural, DOM parity, cache integrity, settings persistence, and CSS keyframe tests in ~16 milliseconds with zero external dependencies.
+  2. **In-Browser Visual Test Runner** ([runner.html](file:///c:/Users/moluguaravind\road_cross_assist/tests/runner.html)): Double-clickable single-page visual test runner that tests strobe cadences, custom text sanitization, speed multipliers, SOS mode, orientation switching, settings serialization, and triple-tap gesture counters in live browser engines.
+  3. **Node.js Native Test Suite** ([unit.test.js](file:///c:/Users/moluguaravind\road_cross_assist/tests/unit.test.js)): Uses Node 18+ native `node:test` and `node:assert` modules without any npm dependencies.
+- **GitHub Actions CI Gatekeeper**:
+  - [.github/workflows/test.yml](file:///c:/Users/moluguaravind\road_cross_assist/.github/workflows/test.yml): Runs automatically on every push or pull request to `main` and `dev` branches, preventing buggy code from ever deploying.
 
 ---
 
