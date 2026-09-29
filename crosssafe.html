@@ -89,6 +89,30 @@
       width: min(48.5vh, 96vw) !important;
       height: min(48.5vh, 96vw) !important;
     }
+    /* Desktop / Laptop Testing Emulation: Constrain Portrait to Centered Phone Pillar */
+    .strobe-surface.desktop-sim-portrait {
+      max-width: 440px !important;
+      width: 100% !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      box-shadow: 0 0 100px rgba(0, 0, 0, 0.95), 0 0 0 100vw rgba(5, 5, 8, 0.92) !important;
+      border-left: 2px solid #2a2a32;
+      border-right: 2px solid #2a2a32;
+    }
+    .strobe-surface.desktop-sim-portrait .circular-beacons-container {
+      max-width: 440px !important;
+      width: 100% !important;
+      flex-direction: column !important;
+      justify-content: space-evenly !important;
+    }
+    .strobe-surface.desktop-sim-portrait .beacon-pod {
+      width: min(72vw, 42vh, 320px) !important;
+      height: min(72vw, 42vh, 320px) !important;
+    }
+    .strobe-surface.desktop-sim-portrait .strobe-badge {
+      font-size: clamp(1.4rem, 4vw, 2.2rem) !important;
+      padding: 12px 20px !important;
+    }
     .strobe-half {
       flex: 1;
       height: 100%;
@@ -1637,11 +1661,18 @@
         } else if (window.innerHeight > window.innerWidth) {
           elSurface.classList.add('force-landscape');
         }
+        elSurface.classList.remove('desktop-sim-portrait');
       } else {
         if (screen.orientation && screen.orientation.lock) {
           screen.orientation.lock('portrait').catch(() => {});
         }
         elSurface.classList.remove('force-landscape');
+        // Desktop / Laptop Testing Emulation: constrain to centered phone pillar on widescreen display
+        if (state.orientation === 'portrait' && window.innerWidth > window.innerHeight) {
+          elSurface.classList.add('desktop-sim-portrait');
+        } else {
+          elSurface.classList.remove('desktop-sim-portrait');
+        }
       }
 
       state.isActive = true;
@@ -1682,6 +1713,7 @@
         try { screen.orientation.unlock(); } catch (_) {}
       }
       elSurface.classList.remove('force-landscape');
+      elSurface.classList.remove('desktop-sim-portrait');
 
       elSurface.classList.add('hidden');
       elSurface.setAttribute('aria-hidden', 'true');

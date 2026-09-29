@@ -172,6 +172,23 @@ class TestCssKeyframesAndStyles(unittest.TestCase):
         self.assertIn("transform: rotate(90deg)", self.crosssafe)
 
 
+    def test_desktop_sim_portrait_rules_exist(self):
+        """Desktop simulation phone pillar rules must exist in styles.css and crosssafe.html."""
+        self.assertIn(".strobe-surface.desktop-sim-portrait", self.styles)
+        self.assertIn(".strobe-surface.desktop-sim-portrait", self.crosssafe)
+        self.assertIn("max-width: 440px", self.styles)
+        self.assertIn("max-width: 440px", self.crosssafe)
+
+    def test_desktop_emulation_logic_in_scripts(self):
+        """app.js and crosssafe.html must conditionally apply desktop-sim-portrait when on widescreen display."""
+        app_js = read_file("app.js")
+        self.assertIn("desktop-sim-portrait", app_js)
+        self.assertIn("desktop-sim-portrait", self.crosssafe)
+        self.assertIn("state.orientation === 'portrait' && window.innerWidth > window.innerHeight", app_js)
+        self.assertIn("state.orientation === 'portrait' && window.innerWidth > window.innerHeight", self.crosssafe)
+
+
+
 class TestSettingsPersistence(unittest.TestCase):
     """Verifies that full session settings are stored and synchronized via localStorage."""
 

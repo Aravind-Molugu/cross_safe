@@ -64,7 +64,14 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 - **Hardware-Accelerated Fallback**: Automatically invokes the `screen.orientation.lock('landscape')` API on Android/Chromium browsers, and gracefully applies a zero-lag 90° clockwise CSS transform (`.force-landscape`) on iOS Safari/WebKit devices.
 - **Persistence**: User preference is preserved in `localStorage` across page reloads and app restarts.
 
-### Animated Micro-Strobe Previews (Item #3)
+### Desktop/Laptop Testing Emulation for Orientation Toggle (Item #5)
+- **Problem Solved**: On desktop and laptop monitors, the screen cannot physically rotate and `screen.orientation.lock` is unsupported. Previously, clicking the orientation button updated the icon but produced zero visible difference when starting the strobe on a widescreen monitor.
+- **Centered Phone Pillar Emulation**:
+  - When running on a widescreen desktop/laptop display (`window.innerWidth > window.innerHeight`), selecting **Portrait** mode constrains the active strobe to an upright mobile phone preview pillar (`max-width: 440px`, centered with deep shadows and dark side-gutter shrouds).
+  - Selecting **Landscape** mode removes the constraint, allowing the strobe to expand across 100% of the widescreen monitor.
+  - Zero mobile regression: on physical phones, the verified native hardware orientation lock and iOS virtual rotation logic remain 100% untouched.
+
+### Animated Micro-Strobe Previews (Item #3 & #6)
 - **Problem Solved**: Previously, Police Strobe, Split Alternating, and Full Screen Flip used static or identical preview icons, causing ambiguity about what cadence each mode produced.
 - **Live CSS Animations**:
   - **Police Strobe**: Multi-pulse red burst followed by multi-pulse blue burst.

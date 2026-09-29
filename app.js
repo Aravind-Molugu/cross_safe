@@ -401,11 +401,18 @@
       } else if (window.innerHeight > window.innerWidth) {
         elSurface.classList.add('force-landscape');
       }
+      elSurface.classList.remove('desktop-sim-portrait');
     } else {
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('portrait').catch(() => {});
       }
       elSurface.classList.remove('force-landscape');
+      // Desktop / Laptop Testing Emulation: constrain to centered phone pillar on widescreen display
+      if (state.orientation === 'portrait' && window.innerWidth > window.innerHeight) {
+        elSurface.classList.add('desktop-sim-portrait');
+      } else {
+        elSurface.classList.remove('desktop-sim-portrait');
+      }
     }
 
     state.isActive = true;
@@ -448,6 +455,7 @@
       try { screen.orientation.unlock(); } catch (_) {}
     }
     elSurface.classList.remove('force-landscape');
+    elSurface.classList.remove('desktop-sim-portrait');
 
     elSurface.classList.add('hidden');
     elSurface.setAttribute('aria-hidden', 'true');

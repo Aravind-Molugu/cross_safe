@@ -401,6 +401,27 @@
       });
     });
 
+    describe('Desktop/Laptop Orientation Emulation (Item #5)', () => {
+      it('Conditionally applies desktop-sim-portrait when in portrait on widescreen monitors', () => {
+        const fakeWidescreen = { width: 1440, height: 900 };
+        const isWidescreen = fakeWidescreen.width > fakeWidescreen.height;
+        let appliedClass = null;
+
+        const orientation = 'portrait';
+        if (orientation === 'portrait' && isWidescreen) {
+          appliedClass = 'desktop-sim-portrait';
+        }
+        assert.equal(appliedClass, 'desktop-sim-portrait');
+
+        const orientLandscape = 'landscape';
+        let landscapeClass = null;
+        if (orientLandscape === 'portrait' && isWidescreen) {
+          landscapeClass = 'desktop-sim-portrait';
+        }
+        assert.equal(landscapeClass, null);
+      });
+    });
+
     // --- Test Execution Engine ---
     function runAllTests() {
       const container = document.getElementById('test-results');

@@ -122,6 +122,21 @@ describe('CSS Keyframes & Standalone Parity', () => {
     assert.ok(styles.includes('.strobe-surface.force-landscape'));
     assert.ok(crosssafe.includes('.strobe-surface.force-landscape'));
   });
+
+  test('Desktop simulation phone pillar rules exist in both stylesheets', () => {
+    assert.ok(styles.includes('.strobe-surface.desktop-sim-portrait'));
+    assert.ok(crosssafe.includes('.strobe-surface.desktop-sim-portrait'));
+    assert.ok(styles.includes('max-width: 440px'));
+    assert.ok(crosssafe.includes('max-width: 440px'));
+  });
+
+  test('Desktop simulation orientation logic exists in app.js and crosssafe.html', () => {
+    const appJs = getFileContent('app.js');
+    assert.ok(appJs.includes('desktop-sim-portrait'));
+    assert.ok(crosssafe.includes('desktop-sim-portrait'));
+    assert.ok(appJs.includes("state.orientation === 'portrait' && window.innerWidth > window.innerHeight"));
+    assert.ok(crosssafe.includes("state.orientation === 'portrait' && window.innerWidth > window.innerHeight"));
+  });
 });
 
 describe('Session State Persistence (localStorage)', () => {

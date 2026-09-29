@@ -136,8 +136,9 @@ npm test
 | **Offline Cache** | Loads instantly with no internet connection after first visit | [ ] |
 | **Keyboard Shortcut** | Pressing **Spacebar** or **Esc** stops flashing on laptop | [ ] |
 | **In-App Orientation Toggle** | Tapping the orientation icon in the header toggles between Portrait and Landscape states; persists in localStorage; switches icon and activates cyan glow in Landscape mode; forces wide-angle landscape strobe without OS rotation lock | [ ] |
+| **Desktop Orientation Emulation** | On desktop/laptop widescreen monitors, selecting Portrait mode renders the active strobe in a centered mobile phone pillar (with dark letterbox side gutters); selecting Landscape mode expands across full monitor width | [ ] |
 | **Animated Pattern Previews** | Selector tiles display live CSS keyframe micro-animations: Police Strobe quad-flashes red then blue; Split Alternating flashes left-red then right-blue with divider; Full Screen Flip alternates solid colors; Wig-Wag alternates circular beacons; White Beacon pulses high-lumen flare | [ ] |
 | **Session Settings Persistence** | App retains pattern, speed, preset/custom text, audio, vibration, brightness hint, and orientation settings across page refreshes and browser restarts via `crosssafe_settings_v1` | [ ] |
 | **Option C Clean Viewport Strobe** | Tapping START triggers strobe immediately with zero Android OS security toasts or pop-ups; stopping strobe returns to dashboard cleanly with zero viewport flash | [ ] |
-| **Automated Unit Tests** | `python tests/test_crosssafe.py` and `tests/runner.html` pass with 100% success rate and zero failures (15/15 tests) | [ ] |
+| **Automated Unit Tests** | `python tests/test_crosssafe.py`, `unit.test.js`, and `tests/runner.html` pass with 100% success rate and zero failures (18/18 tests) | [ ] |
 
