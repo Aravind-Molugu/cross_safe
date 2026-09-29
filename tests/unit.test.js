@@ -153,3 +153,19 @@ describe('Option C Clean Fullscreen (Zero Android Pop-ups)', () => {
   });
 });
 
+describe('GitHub Actions CI Workflow Integrity', () => {
+  const workflow = getFileContent('.github/workflows/test.yml');
+
+  test('Workflow file defines valid push and pull_request on-triggers for main and dev', () => {
+    assert.ok(workflow.length > 0, 'Workflow file must not be empty');
+    assert.ok(workflow.includes('on:'));
+    assert.ok(workflow.includes('push:'));
+    assert.ok(workflow.includes('pull_request:'));
+    assert.ok(workflow.includes('main'));
+    assert.ok(workflow.includes('dev'));
+    assert.ok(workflow.includes('test_crosssafe.py'));
+    assert.ok(workflow.includes('unit.test.js'));
+  });
+});
+
+

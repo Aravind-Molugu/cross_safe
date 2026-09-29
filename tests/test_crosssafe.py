@@ -222,6 +222,21 @@ class TestStandaloneParity(unittest.TestCase):
         self.assertIn("savePersistedSettings", self.crosssafe, "Settings serializer missing in crosssafe.html")
 
 
+class TestGitHubActionsCI(unittest.TestCase):
+    """Verifies that GitHub Actions CI workflow is configured with valid on-triggers."""
+
+    def test_workflow_file_valid(self):
+        workflow = read_file(".github/workflows/test.yml")
+        self.assertGreater(len(workflow.strip()), 0, "Workflow file must not be empty")
+        self.assertIn("on:", workflow, "Workflow must define 'on:' event triggers")
+        self.assertIn("push:", workflow, "Workflow must define push triggers")
+        self.assertIn("pull_request:", workflow, "Workflow must define pull_request triggers")
+        self.assertIn("main", workflow, "Workflow must target main branch")
+        self.assertIn("dev", workflow, "Workflow must target dev branch")
+        self.assertIn("test_crosssafe.py", workflow, "Workflow must run Python test suite")
+        self.assertIn("unit.test.js", workflow, "Workflow must run Node.js test suite")
+
+
 if __name__ == "__main__":
     unittest.main()
 
