@@ -374,6 +374,65 @@ class TestWhatsNewAndVersionBanner(unittest.TestCase):
             self.assertIn("isLatest: true", code)
 
 
+class TestThemeAlignmentAndButtonPolish(unittest.TestCase):
+    """Verifies Item #12: Theme Alignment & Button Polish for Disclaimer and Banner."""
+
+    def setUp(self):
+        self.styles_css = read_file("styles.css")
+        self.crosssafe = read_file("crosssafe.html")
+
+    def test_text_center_syntax_closure(self):
+        """.text-center must have a closing brace so subsequent rules parse properly."""
+        pattern = r"\.text-center\s*\{\s*text-align:\s*center;\s*\}"
+        for code in [self.styles_css, self.crosssafe]:
+            self.assertIsNotNone(
+                re.search(pattern, code),
+                ".text-center must be properly closed with a brace"
+            )
+
+    def test_update_banner_button_styles(self):
+        """Action and dismiss buttons in update banner must have polished theme styling."""
+        for code in [self.styles_css, self.crosssafe]:
+            # .btn-banner-action styling
+            self.assertIn(".btn-banner-action", code)
+            self.assertIn("border-radius: var(--radius-full);", code)
+            self.assertIn("box-shadow: 0 2px 10px rgba(0, 210, 255, 0.25);", code)
+            
+            # .btn-banner-dismiss circular touch target styling
+            self.assertIn(".btn-banner-dismiss", code)
+            self.assertIn("width: 30px;", code)
+            self.assertIn("height: 30px;", code)
+            self.assertIn("border-radius: 50%;", code)
+            self.assertIn("background: rgba(255, 255, 255, 0.08);", code)
+
+    def test_disclaimer_button_styles_and_hierarchy(self):
+        """Disclaimer buttons must have vertical stack layout and theme-aligned styling."""
+        for code in [self.styles_css, self.crosssafe]:
+            # .disclaimer-actions stack
+            self.assertIn(".disclaimer-actions", code)
+            self.assertIn("flex-direction: column;", code)
+            
+            # .btn-accept-current primary cyan button
+            self.assertIn(".btn-accept-current", code)
+            self.assertIn("background: var(--accent-cyan);", code)
+            self.assertIn("box-shadow: 0 4px 14px rgba(0, 210, 255, 0.25);", code)
+            
+            # .btn-accept-all secondary dark button
+            self.assertIn(".btn-accept-all", code)
+            self.assertIn("border: 1.5px solid var(--border-color);", code)
+            
+            # .btn-disclaimer-cancel tertiary ghost button
+            self.assertIn(".btn-disclaimer-cancel", code)
+            self.assertIn("background: transparent;", code)
+
+    def test_secondary_button_hover_glow(self):
+        """.btn-secondary must have transition and cyan hover border glow."""
+        for code in [self.styles_css, self.crosssafe]:
+            self.assertIn(".btn-secondary:hover", code)
+            self.assertIn("border-color: var(--accent-cyan);", code)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 

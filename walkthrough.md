@@ -143,6 +143,18 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
   - Full Keep a Changelog documentation established at the repository root covering v1.0.0 through v1.9.0.
   - Zero-bloat: Strictly excluded from Service Worker caching (`ASSETS_TO_CACHE`).
 
+### UI/UX Theme Alignment & Button Polish (Item #12)
+- **Problem Solved**: A missing closing brace `}` on `.text-center` in CSS caused browsers to drop styling rules for subsequent elements, rendering the disclaimer buttons and update banner controls as unstyled browser defaults.
+- **Disclaimer Modal Actions Hierarchy**:
+  - **Primary**: Full-width cyan filled button (`.btn-accept-current`) with dark bold typography and soft cyan glow.
+  - **Secondary**: Dark outlined card button (`.btn-accept-all`) with border transition to cyan on hover.
+  - **Tertiary / Cancel**: Subtle ghost button (`.btn-disclaimer-cancel`) that illuminates on hover.
+- **Update Notification Banner Controls**:
+  - **"See What's New"**: High-contrast cyan pill button (`.btn-banner-action`) with bold text and tactile shadow.
+  - **"×" Dismiss**: Circular 30x30px touch target (`.btn-banner-dismiss`) with translucent pill background and smooth scale animation on hover/active.
+- **Version History Button**: Outlined card button with cyan border glow on hover matching the app's dark neon aesthetic.
+- **Standalone Parity**: 100% synchronized into single-file edition (`crosssafe.html`).
+
 ---
 
 ## Verification Results
