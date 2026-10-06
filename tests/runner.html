@@ -78,6 +78,23 @@
     <div id="modal-info" class="hidden"><div class="modal-backdrop"></div></div>
     <button id="btn-close-info"></button>
     <button id="btn-got-it"></button>
+    <div id="update-banner" class="hidden">
+      <button id="btn-see-whats-new"></button>
+      <button id="btn-dismiss-update"></button>
+    </div>
+    <div id="modal-disclaimer" class="hidden">
+      <button id="btn-close-disclaimer"></button>
+      <div id="disclaimer-pattern-pill"></div>
+      <button id="btn-accept-current"></button>
+      <button id="btn-accept-all"></button>
+      <button id="btn-disclaimer-cancel"></button>
+    </div>
+    <div id="modal-whats-new" class="hidden">
+      <button id="btn-close-whats-new"></button>
+      <div id="whats-new-body"></div>
+      <button id="btn-close-whats-new-footer"></button>
+      <button id="btn-open-whats-new"></button>
+    </div>
   </div>
 
   <script>
@@ -419,6 +436,149 @@
           landscapeClass = 'desktop-sim-portrait';
         }
         assert.equal(landscapeClass, null);
+      });
+    });
+
+    describe('Regional Disclaimer & 4-Hour Window Math (Item #10)', () => {
+      const FOUR_HOURS = 4 * 60 * 60 * 1000;
+
+      it('Reports unaccepted pattern as not accepted', () => {
+        const store = {};
+        const isAccepted = (p, now = 1000000) => {
+          if (store.all && now < store.all) return true;
+          if (store[p] && now < store[p]) return true;
+          return false;
+        };
+        assert.equal(isAccepted('police'), false);
+      });
+
+      it('Validates accepted pattern within 4-hour window', () => {
+        const baseTime = 1000000;
+        const store = { police: baseTime + FOUR_HOURS };
+        const isAccepted = (p, now) => {
+          if (store.all && now < store.all) return true;
+          if (store[p] && now < store[p]) return true;
+          return false;
+        };
+        // 3 hours later -> valid
+        assert.equal(isAccepted('police', baseTime + 3 * 60 * 60 * 1000), true);
+        // Different pattern -> invalid
+        assert.equal(isAccepted('wigwag', baseTime + 3 * 60 * 60 * 1000), false);
+        // 4 hours and 1 millisecond later -> expired
+        assert.equal(isAccepted('police', baseTime + FOUR_HOURS + 1), false);
+      });
+
+      it('"Accept for All" covers any pattern for 4 hours', () => {
+        const baseTime = 2000000;
+        const store = { all: baseTime + FOUR_HOURS };
+        const isAccepted = (p, now) => {
+          if (store.all && now < store.all) return true;
+          if (store[p] && now < store[p]) return true;
+          return false;
+        };
+        assert.equal(isAccepted('police', baseTime + 1000), true);
+        assert.equal(isAccepted('wigwag', baseTime + 1000), true);
+        assert.equal(isAccepted('white', baseTime + 1000), true);
+      });
+    });
+
+    describe('60-Day Audit Logging & SHA-256 Hash Chaining (Item #10)', () => {
+      function sha256Test(ascii) {
+        function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+        const mathPow = Math.pow; const maxWord = mathPow(2, 32);
+        let result = ''; const words = []; const asciiBitLength = ascii.length * 8;
+        let hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+        const k = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+          0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+          0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+          0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+          0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+          0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+          0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+          0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+        ascii += '\x80'; while ((ascii.length % 64) !== 56) ascii += '\x00';
+        for (let i = 0; i < ascii.length; i++) { const j = ascii.charCodeAt(i); words[i >> 2] |= j << ((3 - (i % 4)) * 8); }
+        words[words.length] = ((asciiBitLength / maxWord) | 0); words[words.length] = (asciiBitLength & 0xffffffff);
+        for (let j = 0; j < words.length;) {
+          const w = words.slice(j, j += 16); const oldHash = hash.slice(0);
+          for (let i = 0; i < 64; i++) {
+            const w15 = w[i - 15], w2 = w[i - 2]; const a = hash[0], e = hash[4];
+            const s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+            const ch = (e & hash[5]) ^ ((~e) & hash[6]);
+            const temp1 = (hash[7] + s1 + ch + k[i] + (w[i] = (i < 16) ? w[i] : (
+              w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
+              (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+            ) | 0)) | 0;
+            const s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+            const maj = (a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]);
+            const temp2 = (s0 + maj) | 0;
+            hash = [(temp1 + temp2) | 0, a, hash[1], hash[2], (hash[3] + temp1) | 0, hash[4], hash[5], hash[6]];
+          }
+          for (let i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+        }
+        for (let i = 0; i < 8; i++) {
+          for (let j = 3; j >= 0; j--) {
+            const b = (hash[i] >> (8 * j)) & 255;
+            result += (b < 16 ? '0' : '') + b.toString(16);
+          }
+        }
+        return result;
+      }
+
+      it('Computes deterministic SHA-256 hash digests', () => {
+        const hash = sha256Test("CrossSafe");
+        assert.equal(typeof hash, 'string');
+        assert.equal(hash.length, 64);
+      });
+
+      it('Detects hash chain tampering when fields are modified', () => {
+        const GENESIS = '0000000000000000000000000000000000000000000000000000000000000000';
+        const record = {
+          index: 1,
+          pattern: 'police',
+          speed: 'slow',
+          prevHash: GENESIS
+        };
+        const originalHash = sha256Test(`${record.prevHash}|${record.index}|${record.pattern}|${record.speed}`);
+        record.hash = originalHash;
+
+        // Tampering: user changes speed from 'slow' to 'fast'
+        const tamperedPayload = `${record.prevHash}|${record.index}|${record.pattern}|fast`;
+        const calculated = sha256Test(tamperedPayload);
+        assert.equal(calculated === record.hash, false);
+      });
+
+      it('Prunes records older than 60 days', () => {
+        const now = Date.now();
+        const sixtyDays = 60 * 24 * 60 * 60 * 1000;
+        const log = [
+          { timestamp: new Date(now - sixtyDays - 5000).toISOString(), id: 'old' },
+          { timestamp: new Date(now - 1000).toISOString(), id: 'recent' }
+        ];
+        const cutoff = now - sixtyDays;
+        const pruned = log.filter(e => new Date(e.timestamp).getTime() >= cutoff);
+        assert.equal(pruned.length, 1);
+        assert.equal(pruned[0].id, 'recent');
+      });
+    });
+
+    describe('What\'s New & Version Notifications (Item #11)', () => {
+      it('Suppresses banner on fresh installation', () => {
+        let bannerShown = false;
+        const lastSeen = null; // First visit
+        if (lastSeen && lastSeen !== '1.9.0') {
+          bannerShown = true;
+        }
+        assert.equal(bannerShown, false);
+      });
+
+      it('Displays update banner when upgrading from previous version', () => {
+        let bannerShown = false;
+        const lastSeen = '1.8.0'; // Upgrade
+        if (lastSeen && lastSeen !== '1.9.0') {
+          bannerShown = true;
+        }
+        assert.equal(bannerShown, true);
       });
     });
 

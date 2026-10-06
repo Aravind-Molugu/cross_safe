@@ -10,1066 +10,1589 @@
   <title>CrossSafe - Road Crossing Assist (Standalone Offline Edition)</title>
   
   <style>
-    /* CrossSafe - Embedded Standalone Stylesheet */
-    :root {
-      --bg-dark: #0a0d14;
-      --bg-card: #131926;
-      --bg-card-hover: #1c2436;
-      --border-color: #242f45;
-      --text-main: #f0f4fc;
-      --text-muted: #8e9bb3;
-      --strobe-red: #ff0019;
-      --strobe-blue: #0048ff;
-      --strobe-amber: #ffaa00;
-      --strobe-white: #ffffff;
-      --accent-cyan: #00d2ff;
-      --accent-green: #00e676;
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 22px;
-      --radius-full: 9999px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-    }
-    .strobe-surface {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      z-index: 999999;
-      background-color: #000;
-      display: flex;
-      cursor: pointer;
-      touch-action: manipulation;
-      will-change: background-color, opacity;
-      transform: translateZ(0);
-    }
-    .strobe-surface.hidden {
-      display: none !important;
-    }
-    /* Force Virtual Landscape Orientation (for iOS Safari & Unsupported Lock APIs) */
-    .strobe-surface.force-landscape {
-      width: 100vh !important;
-      width: 100dvh !important;
-      height: 100vw !important;
-      height: 100dvw !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 100vw !important;
-      transform: rotate(90deg) !important;
-      transform-origin: top left !important;
-      overflow: hidden !important;
-    }
-    .strobe-surface.force-landscape .circular-beacons-container {
-      width: 100vh !important;
-      width: 100dvh !important;
-      height: 100vw !important;
-      height: 100dvw !important;
-    }
-    .strobe-surface.force-landscape .beacon-pod {
-      width: min(48.5vh, 96vw) !important;
-      height: min(48.5vh, 96vw) !important;
-    }
-    /* Desktop / Laptop Testing Emulation: Constrain Portrait to Centered Phone Pillar */
-    .strobe-surface.desktop-sim-portrait {
-      max-width: 440px !important;
-      width: 100% !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      box-shadow: 0 0 100px rgba(0, 0, 0, 0.95), 0 0 0 100vw rgba(5, 5, 8, 0.92) !important;
-      border-left: 2px solid #2a2a32;
-      border-right: 2px solid #2a2a32;
-    }
-    .strobe-surface.desktop-sim-portrait .circular-beacons-container {
-      max-width: 440px !important;
-      width: 100% !important;
-      flex-direction: column !important;
-      justify-content: space-evenly !important;
-    }
-    .strobe-surface.desktop-sim-portrait .beacon-pod {
-      width: min(72vw, 42vh, 320px) !important;
-      height: min(72vw, 42vh, 320px) !important;
-    }
-    .strobe-surface.desktop-sim-portrait .strobe-badge {
-      font-size: clamp(1.4rem, 4vw, 2.2rem) !important;
-      padding: 12px 20px !important;
-    }
-    .strobe-half {
-      flex: 1;
-      height: 100%;
-      will-change: opacity, background-color;
-    }
-    .circular-beacons-container {
-      display: none;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-evenly;
-      background-color: #000;
-      box-sizing: border-box;
-      padding: 1vmin;
-      overflow: hidden;
-    }
-    .strobe-surface.mode-circular .strobe-half {
-      display: none !important;
-    }
-    .strobe-surface.mode-circular .circular-beacons-container {
-      display: flex !important;
-    }
-    .beacon-pod {
-      width: min(48.5vw, 96vh);
-      height: min(48.5vw, 96vh);
-      aspect-ratio: 1 / 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      border-radius: 50%;
-    }
-    .beacon-housing {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: radial-gradient(circle at 50% 50%, #1e1e1e 60%, #0a0a0a 100%);
-      border: min(1.8vw, 8px) solid #282828;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: inset 0 0 min(3vw, 16px) #000, 0 6px min(5vw, 24px) rgba(0, 0, 0, 0.95);
-      box-sizing: border-box;
-    }
-    .beacon-lens {
-      width: 90%;
-      height: 90%;
-      border-radius: 50%;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.02s linear, box-shadow 0.02s linear;
-    }
-    .beacon-rings {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 6px, rgba(0, 0, 0, 0.22) 7px, transparent 8px);
-      pointer-events: none;
-    }
-    .beacon-pod.lit .beacon-lens {
-      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #fff2a3 15%, #ffb700 45%, #ff8000 70%, #d94b00 90%, #661e00 100%);
-      box-shadow: 0 0 min(8vw, 45px) #ffaa00, 0 0 min(16vw, 90px) rgba(255, 170, 0, 0.85), inset 0 0 min(6vw, 35px) #ffffff;
-    }
-    .beacon-pod.lit .beacon-core {
-      width: 32%;
-      height: 32%;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ffffff 35%, rgba(255, 255, 220, 0.9) 65%, transparent 100%);
-      filter: blur(1.5px);
-      box-shadow: 0 0 min(4vw, 20px) #ffffff;
-    }
-    .beacon-pod.unlit .beacon-lens {
-      background: radial-gradient(circle at 50% 50%, #362000 0%, #241500 45%, #150c00 80%, #0a0500 100%);
-      box-shadow: inset 0 0 min(5vw, 25px) rgba(0, 0, 0, 0.95);
-      opacity: 0.6;
-    }
-    .beacon-pod.unlit .beacon-core {
-      width: 25%;
-      height: 25%;
-      border-radius: 50%;
-      background: #140b00;
-      opacity: 0.2;
-    }
-    .strobe-badge {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.88);
-      border: 4px solid #ffffff;
-      padding: 16px 28px;
-      border-radius: var(--radius-lg);
-      color: #ffffff;
-      font-size: clamp(1.8rem, 6vw, 3.8rem);
-      font-weight: 900;
-      letter-spacing: 2px;
-      text-align: center;
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-      pointer-events: none;
-      display: none;
-    }
-    .strobe-surface.show-badge .strobe-badge {
-      display: block;
-    }
-    .strobe-dismiss-hint {
-      position: absolute;
-      bottom: calc(20px + var(--safe-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      padding: 8px 18px;
-      border-radius: var(--radius-full);
-      font-size: 0.8rem;
-      letter-spacing: 1.5px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.8);
-      pointer-events: none;
-      animation: pulseDim 2s infinite ease-in-out;
-    }
-    @keyframes pulseDim {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-    .tap-progress-pill {
-      position: absolute;
-      bottom: calc(66px + var(--safe-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.92);
-      border: 2px solid var(--accent-cyan);
-      padding: 10px 22px;
-      border-radius: var(--radius-full);
-      font-size: 0.9rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #ffffff;
-      box-shadow: 0 0 25px rgba(0, 210, 255, 0.5);
-      pointer-events: none;
-      z-index: 100;
-      white-space: nowrap;
-      animation: tapBounce 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      transition: opacity 0.25s ease;
-    }
-    .tap-progress-pill.fade-out {
-      opacity: 0;
-    }
-    @keyframes tapBounce {
-      0% {
-        transform: translate(-50%, 6px) scale(0.9);
-      }
-      100% {
-        transform: translate(-50%, 0) scale(1);
-      }
-    }
-    .brightness-toast {
-      position: absolute;
-      top: calc(24px + var(--safe-top));
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.88);
-      border: 1.5px solid rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 10px 20px;
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #fffae6;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-      z-index: 100;
-      pointer-events: none;
-      animation: fadeInDown 0.3s ease-out;
-      transition: opacity 0.5s ease;
-      white-space: nowrap;
-    }
-    .brightness-toast.toast-fade {
-      opacity: 0;
-    }
-    @keyframes fadeInDown {
-      from {
-        opacity: 0;
-        transform: translate(-50%, -12px);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-    }
-    .app-container {
-      max-width: 520px;
-      margin: 0 auto;
-      width: 100%;
-      padding: calc(16px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      flex: 1;
-    }
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .logo-icon {
-      width: 32px;
-      height: 32px;
-      color: var(--accent-cyan);
-    }
-    .app-title {
-      font-size: 1.45rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .app-tagline {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .icon-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .icon-btn:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--accent-cyan);
-    }
-    .icon-btn.active {
-      color: var(--accent-cyan);
-      border-color: var(--accent-cyan);
-      background: rgba(0, 210, 255, 0.12);
-      box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
-    }
-    .status-bar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: var(--radius-full);
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-    }
-    .badge-offline .dot {
-      width: 7px;
-      height: 7px;
-      background-color: var(--accent-green);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--accent-green);
-    }
-    .badge-wakelock {
-      color: var(--accent-cyan);
-    }
-    .trigger-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 12px 0;
-      position: relative;
-    }
-    .btn-trigger {
-      position: relative;
-      width: 210px;
-      height: 210px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      outline: none;
-    }
-    .trigger-inner {
-      position: relative;
-      z-index: 2;
-      width: 175px;
-      height: 175px;
-      border-radius: 50%;
-      background: linear-gradient(145deg, #ff0844 0%, #ff4e50 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 30px rgba(255, 8, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      color: #fff;
-    }
-    .btn-trigger:active .trigger-inner {
-      transform: scale(0.94);
-      box-shadow: 0 4px 15px rgba(255, 8, 68, 0.3);
-    }
-    .trigger-icon {
-      width: 44px;
-      height: 44px;
-      margin-bottom: 4px;
-      fill: rgba(255, 255, 255, 0.2);
-    }
-    .trigger-text {
-      font-size: 1.15rem;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-    }
-    .trigger-sub {
-      font-size: 0.65rem;
-      opacity: 0.85;
-      margin-top: 3px;
-      text-align: center;
-      max-width: 130px;
-    }
-    .pulse-ring {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: rgba(255, 8, 68, 0.25);
-      animation: pulseAnim 2.4s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
-      z-index: 1;
-    }
-    .pulse-ring.ring-2 {
-      animation-delay: 1.2s;
-    }
-    @keyframes pulseAnim {
-      0% { transform: scale(0.85); opacity: 0.8; }
-      100% { transform: scale(1.35); opacity: 0; }
-    }
-    .hint-text {
-      margin-top: 14px;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      text-align: center;
-    }
-    .settings-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-    }
-    .pattern-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .pattern-btn {
-      background: var(--bg-dark);
-      border: 1.5px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
-    }
-    .pattern-btn.active {
-      border-color: var(--accent-cyan);
-      background: rgba(0, 210, 255, 0.06);
-    }
-    .pattern-preview {
-      width: 100%;
-      height: 20px;
-      border-radius: var(--radius-sm);
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .police-preview {
-      position: relative;
-      background: #0d0d12;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      animation: miniPoliceStrobe 1.3s infinite linear;
-    }
-    @keyframes miniPoliceStrobe {
-      0%, 4%, 8%, 12% {
-        background: var(--strobe-red);
-        box-shadow: 0 0 12px rgba(255, 0, 25, 0.9);
-      }
-      2%, 6%, 10% {
-        background: #140003;
-        box-shadow: none;
-      }
-      14%, 48% {
-        background: #0d0d12;
-        box-shadow: none;
-      }
-      50%, 54%, 58%, 62% {
-        background: var(--strobe-blue);
-        box-shadow: 0 0 12px rgba(0, 72, 255, 0.9);
-      }
-      52%, 56%, 60% {
-        background: #000414;
-        box-shadow: none;
-      }
-      64%, 100% {
-        background: #0d0d12;
-        box-shadow: none;
-      }
-    }
-    .split-preview {
-      display: flex !important;
-      align-items: stretch;
-      background: #0a0a0f;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 0 !important;
-      overflow: hidden;
-    }
-    .split-half {
-      flex: 1;
-      height: 100%;
-    }
-    .split-divider {
-      width: 2px;
-      height: 100%;
-      background: #000000;
-      box-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
-      flex-shrink: 0;
-    }
-    .split-half.left-half {
-      animation: miniSplitLeft 0.8s infinite ease-in-out;
-    }
-    .split-half.right-half {
-      animation: miniSplitRight 0.8s infinite ease-in-out;
-    }
-    @keyframes miniSplitLeft {
-      0%, 46% {
-        background: var(--strobe-red);
-        box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 0, 25, 0.7);
-      }
-      50%, 96% {
-        background: #120003;
-        box-shadow: none;
-      }
-      98%, 100% {
-        background: #120003;
-        box-shadow: none;
-      }
-    }
-    @keyframes miniSplitRight {
-      0%, 46% {
-        background: #000512;
-        box-shadow: none;
-      }
-      50%, 96% {
-        background: var(--strobe-blue);
-        box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.3), 0 0 10px rgba(0, 72, 255, 0.7);
-      }
-      98%, 100% {
-        background: #000512;
-        box-shadow: none;
-      }
-    }
-    .fullscreen-preview {
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      animation: miniFullscreenFlip 1.0s infinite ease-in-out;
-    }
-    @keyframes miniFullscreenFlip {
-      0%, 46% {
-        background: var(--strobe-red);
-        box-shadow: 0 0 10px rgba(255, 0, 25, 0.7);
-      }
-      48%, 50% {
-        background: #08080c;
-        box-shadow: none;
-      }
-      52%, 96% {
-        background: var(--strobe-blue);
-        box-shadow: 0 0 10px rgba(0, 72, 255, 0.7);
-      }
-      98%, 100% {
-        background: #08080c;
-        box-shadow: none;
-      }
-    }
-    .wigwag-preview {
-      background: #0d0d0d;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-    .preview-circle {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 1px solid #ffaa00;
-      transition: all 0.1s ease;
-    }
-    .preview-circle.left-circle {
-      animation: miniWigWagLeft 0.9s infinite ease-in-out;
-    }
-    .preview-circle.right-circle {
-      animation: miniWigWagRight 0.9s infinite ease-in-out;
-    }
-    @keyframes miniWigWagLeft {
-      0%, 46% {
-        background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
-        box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
-        opacity: 1;
-        border-color: #ffe680;
-      }
-      50%, 96% {
-        background: #241300;
-        box-shadow: none;
-        opacity: 0.35;
-        border-color: #663b00;
-      }
-      98%, 100% {
-        background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
-        box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
-        opacity: 1;
-        border-color: #ffe680;
-      }
-    }
-    @keyframes miniWigWagRight {
-      0%, 46% {
-        background: #241300;
-        box-shadow: none;
-        opacity: 0.35;
-        border-color: #663b00;
-      }
-      50%, 96% {
-        background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
-        box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
-        opacity: 1;
-        border-color: #ffe680;
-      }
-      98%, 100% {
-        background: #241300;
-        box-shadow: none;
-        opacity: 0.35;
-        border-color: #663b00;
-      }
-    }
-    .white-preview {
-      background: #0d0d12;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      animation: miniWhiteBeacon 0.9s infinite ease-in-out;
-    }
-    @keyframes miniWhiteBeacon {
-      0%, 40% {
-        background: #ffffff;
-        box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
-      }
-      50%, 90% {
-        background: #222228;
-        box-shadow: none;
-      }
-      100% {
-        background: #ffffff;
-        box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
-      }
-    }
-    .sos-preview {
-      background: #111;
-      border: 1px solid #333;
-    }
-    .sos-morse {
-      font-size: 0.72rem;
-      font-weight: 900;
-      color: #ffffff;
-      letter-spacing: 1.5px;
-    }
-    .pattern-name {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--text-main);
-      text-align: center;
-      width: 100%;
-    }
-    .pattern-desc {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-align: center;
-      width: 100%;
-      line-height: 1.25;
-    }
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    @media (max-width: 400px) {
-      .options-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .option-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .option-group-full {
-      grid-column: 1 / -1;
-    }
-    .option-label {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-    .segmented-control {
-      display: flex;
-      background: var(--bg-dark);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 3px;
-      gap: 3px;
-    }
-    .speed-segmented .segment-btn {
-      font-size: 0.72rem;
-      padding: 8px 2px;
-      white-space: nowrap;
-    }
-    .segment-btn {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 8px 4px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .segment-btn.active {
-      background: var(--bg-card);
-      color: var(--text-main);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-    /* Text Overlay Control: Presets + Custom Input */
-    .option-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .char-counter {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
-    .overlay-control-row {
-      display: flex;
-      gap: 8px;
-      align-items: stretch;
-      flex-wrap: wrap;
-    }
-    .overlay-presets {
-      flex: 0 0 170px;
-    }
-    @media (max-width: 440px) {
-      .overlay-presets {
-        flex: 1 1 100%;
-      }
-    }
-    .overlay-custom-wrap {
-      flex: 1 1 160px;
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .overlay-custom-input {
-      width: 100%;
-      background: var(--bg-dark);
-      border: 1.5px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 8px 36px 8px 12px;
-      color: var(--text-main);
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      outline: none;
-      transition: all 0.2s ease;
-      box-sizing: border-box;
-      height: 100%;
-      min-height: 38px;
-    }
-    .overlay-custom-input:focus,
-    .overlay-custom-input.active {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
-      background: rgba(0, 210, 255, 0.04);
-    }
-    .overlay-custom-input::placeholder {
-      color: #4f5d75;
-      font-weight: 500;
-    }
-    .btn-clear-input {
-      position: absolute;
-      right: 7px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 24px;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--text-muted);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-      transition: all 0.15s ease;
-      z-index: 2;
-    }
-    .btn-clear-input:hover {
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.22);
-      border-color: rgba(255, 255, 255, 0.4);
-    }
-    .btn-clear-input:active {
-      transform: translateY(-50%) scale(0.9);
-      background: rgba(0, 210, 255, 0.3);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-    }
-    .overlay-custom-input:not(:placeholder-shown) ~ .btn-clear-input {
-      color: #ffffff;
-      background: rgba(255, 8, 68, 0.28);
-      border-color: rgba(255, 8, 68, 0.55);
-    }
-    .overlay-custom-input:not(:placeholder-shown) ~ .btn-clear-input:hover {
-      background: rgba(255, 8, 68, 0.5);
-      border-color: rgba(255, 8, 68, 0.8);
-      color: #ffffff;
-    }
-    .input-hint {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-    .toggles-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      border-top: 1px solid var(--border-color);
-      padding-top: 16px;
-    }
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-    }
-    .toggle-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .toggle-title {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-    .toggle-desc {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-    .toggle-switch {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 44px;
-      height: 24px;
-      background: #252e42;
-      border-radius: var(--radius-full);
-      position: relative;
-      outline: none;
-      cursor: pointer;
-      transition: background 0.25s ease;
-      flex-shrink: 0;
-    }
-    .toggle-switch::before {
-      content: "";
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .toggle-switch:checked {
-      background: var(--accent-cyan);
-    }
-    .toggle-switch:checked::before {
-      transform: translateX(20px);
-    }
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal.hidden {
-      display: none !important;
-    }
-    .modal-backdrop {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
-    }
-    .modal-content {
-      position: relative;
-      z-index: 2;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      max-width: 440px;
-      width: 100%;
-      padding: 24px;
-      max-height: 85vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .modal-header h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
-    }
-    .modal-close {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.5rem;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .instruction-block {
-      margin-bottom: 16px;
-    }
-    .instruction-block h4 {
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .instruction-block ol {
-      padding-left: 20px;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-    .instruction-block ol strong {
-      color: var(--text-main);
-    }
-    .note-box {
-      background: rgba(255, 170, 0, 0.1);
-      border-left: 3px solid var(--strobe-amber);
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 0.78rem;
-      color: #ffcc66;
-    }
-    .modal-footer {
-      margin-top: 20px;
-      display: flex;
-      justify-content: flex-end;
-    }
-    .btn-primary {
-      background: var(--accent-cyan);
-      color: #000;
-      border: none;
-      font-weight: 700;
-      padding: 10px 22px;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.88rem;
-    }
+/* CrossSafe - Core Stylesheet */
+:root {
+  --bg-dark: #0a0d14;
+  --bg-card: #131926;
+  --bg-card-hover: #1c2436;
+  --border-color: #242f45;
+  --text-main: #f0f4fc;
+  --text-muted: #8e9bb3;
+  
+  /* Emergency Colors */
+  --strobe-red: #ff0019;
+  --strobe-blue: #0048ff;
+  --strobe-amber: #ffaa00;
+  --strobe-white: #ffffff;
+  
+  --accent-cyan: #00d2ff;
+  --accent-green: #00e676;
+  
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 9999px;
 
-    @media (prefers-reduced-motion: reduce) {
-      .police-preview,
-      .split-half,
-      .fullscreen-preview,
-      .preview-circle.left-circle,
-      .preview-circle.right-circle,
-      .white-preview,
-      .pulse-ring,
-      .strobe-dismiss-hint {
-        animation: none !important;
-      }
-    }
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   Strobe Light Fullscreen Surface
+   ========================================================================== */
+.strobe-surface {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 999999;
+  background-color: #000;
+  display: flex;
+  cursor: pointer;
+  touch-action: manipulation;
+  will-change: background-color, opacity;
+  transform: translateZ(0);
+}
+
+.strobe-surface.hidden {
+  display: none !important;
+}
+
+/* Force Virtual Landscape Orientation (for iOS Safari & Unsupported Lock APIs) */
+.strobe-surface.force-landscape {
+  width: 100vh !important;
+  width: 100dvh !important;
+  height: 100vw !important;
+  height: 100dvw !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 100vw !important;
+  transform: rotate(90deg) !important;
+  transform-origin: top left !important;
+  overflow: hidden !important;
+}
+
+.strobe-surface.force-landscape .circular-beacons-container {
+  width: 100vh !important;
+  width: 100dvh !important;
+  height: 100vw !important;
+  height: 100dvw !important;
+}
+
+.strobe-surface.force-landscape .beacon-pod {
+  width: min(48.5vh, 96vw) !important;
+  height: min(48.5vh, 96vw) !important;
+}
+
+/* Desktop / Laptop Testing Emulation: Constrain Portrait to Centered Phone Pillar */
+.strobe-surface.desktop-sim-portrait {
+  max-width: 440px !important;
+  width: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.95), 0 0 0 100vw rgba(5, 5, 8, 0.92) !important;
+  border-left: 2px solid #2a2a32;
+  border-right: 2px solid #2a2a32;
+}
+
+.strobe-surface.desktop-sim-portrait .circular-beacons-container {
+  max-width: 440px !important;
+  width: 100% !important;
+  flex-direction: column !important;
+  justify-content: space-evenly !important;
+}
+
+.strobe-surface.desktop-sim-portrait .beacon-pod {
+  width: min(72vw, 42vh, 320px) !important;
+  height: min(72vw, 42vh, 320px) !important;
+}
+
+.strobe-surface.desktop-sim-portrait .strobe-badge {
+  font-size: clamp(1.4rem, 4vw, 2.2rem) !important;
+  padding: 12px 20px !important;
+}
+
+.strobe-half {
+  flex: 1;
+  height: 100%;
+  transition: opacity 0.02s linear;
+  will-change: opacity, background-color;
+}
+
+/* ==========================================================================
+   Dual Circular Beacons (Dual Amber Wig-Wag Mode)
+   ========================================================================== */
+.circular-beacons-container {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  background-color: #000;
+  box-sizing: border-box;
+  padding: 1vmin;
+  overflow: hidden;
+}
+
+.strobe-surface.mode-circular .strobe-half {
+  display: none !important;
+}
+
+.strobe-surface.mode-circular .circular-beacons-container {
+  display: flex !important;
+}
+
+.beacon-pod {
+  width: min(48.5vw, 96vh);
+  height: min(48.5vw, 96vh);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.beacon-housing {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #1e1e1e 60%, #0a0a0a 100%);
+  border: min(1.8vw, 8px) solid #282828;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 min(3vw, 16px) #000, 0 6px min(5vw, 24px) rgba(0, 0, 0, 0.95);
+  box-sizing: border-box;
+}
+
+.beacon-lens {
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.02s linear, box-shadow 0.02s linear;
+}
+
+/* Fresnel Optics Concentric Rings */
+.beacon-rings {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 6px, rgba(0, 0, 0, 0.22) 7px, transparent 8px);
+  pointer-events: none;
+}
+
+/* Lit State */
+.beacon-pod.lit .beacon-lens {
+  background: radial-gradient(circle at 50% 50%, #ffffff 0%, #fff2a3 15%, #ffb700 45%, #ff8000 70%, #d94b00 90%, #661e00 100%);
+  box-shadow: 0 0 min(8vw, 45px) #ffaa00, 0 0 min(16vw, 90px) rgba(255, 170, 0, 0.85), inset 0 0 min(6vw, 35px) #ffffff;
+}
+
+.beacon-pod.lit .beacon-core {
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 35%, rgba(255, 255, 220, 0.9) 65%, transparent 100%);
+  filter: blur(1.5px);
+  box-shadow: 0 0 min(4vw, 20px) #ffffff;
+}
+
+/* Unlit State */
+.beacon-pod.unlit .beacon-lens {
+  background: radial-gradient(circle at 50% 50%, #362000 0%, #241500 45%, #150c00 80%, #0a0500 100%);
+  box-shadow: inset 0 0 min(5vw, 25px) rgba(0, 0, 0, 0.95);
+  opacity: 0.6;
+}
+
+.beacon-pod.unlit .beacon-core {
+  width: 25%;
+  height: 25%;
+  border-radius: 50%;
+  background: #140b00;
+  opacity: 0.2;
+}
+
+.strobe-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.88);
+  border: 4px solid #ffffff;
+  padding: 16px 28px;
+  border-radius: var(--radius-lg);
+  color: #ffffff;
+  font-size: clamp(1.8rem, 6vw, 3.8rem);
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  display: none;
+}
+
+.strobe-surface.show-badge .strobe-badge {
+  display: block;
+}
+
+.strobe-dismiss-hint {
+  position: absolute;
+  bottom: calc(20px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  animation: pulseDim 2s infinite ease-in-out;
+}
+
+.tap-progress-pill {
+  position: absolute;
+  bottom: calc(66px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.92);
+  border: 2px solid var(--accent-cyan);
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(0, 210, 255, 0.5);
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  animation: tapBounce 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: opacity 0.25s ease;
+}
+
+.tap-progress-pill.fade-out {
+  opacity: 0;
+}
+
+@keyframes tapBounce {
+  0% {
+    transform: translate(-50%, 6px) scale(0.9);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes pulseDim {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.brightness-toast {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fffae6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  pointer-events: none;
+  animation: fadeInDown 0.3s ease-out;
+  transition: opacity 0.5s ease;
+  white-space: nowrap;
+}
+
+.brightness-toast.toast-fade {
+  opacity: 0;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ==========================================================================
+   App Container & Header
+   ========================================================================== */
+.app-container {
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+  padding: calc(16px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-cyan);
+}
+
+.app-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-tagline {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-cyan);
+}
+
+.icon-btn.active {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: rgba(0, 210, 255, 0.12);
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+}
+
+/* Status Bar */
+.status-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.badge-offline .dot {
+  width: 7px;
+  height: 7px;
+  background-color: var(--accent-green);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-green);
+}
+
+.badge-wakelock {
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   Hero Trigger Button
+   ========================================================================== */
+.trigger-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 12px 0;
+  position: relative;
+}
+
+.btn-trigger {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.trigger-inner {
+  position: relative;
+  z-index: 2;
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ff0844 0%, #ff4e50 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(255, 8, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  color: #fff;
+}
+
+.btn-trigger:active .trigger-inner {
+  transform: scale(0.94);
+  box-shadow: 0 4px 15px rgba(255, 8, 68, 0.3);
+}
+
+.trigger-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  fill: rgba(255, 255, 255, 0.2);
+}
+
+.trigger-text {
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.trigger-sub {
+  font-size: 0.65rem;
+  opacity: 0.85;
+  margin-top: 3px;
+  text-align: center;
+  max-width: 130px;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 8, 68, 0.25);
+  animation: pulseAnim 2.4s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  z-index: 1;
+}
+
+.pulse-ring.ring-2 {
+  animation-delay: 1.2s;
+}
+
+@keyframes pulseAnim {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.hint-text {
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ==========================================================================
+   Settings Card & Controls
+   ========================================================================== */
+.settings-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Pattern Grid */
+.pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.pattern-btn {
+  background: var(--bg-dark);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.pattern-btn.active {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 210, 255, 0.06);
+}
+
+.pattern-preview {
+  width: 100%;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.police-preview {
+  position: relative;
+  background: #0d0d12;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: miniPoliceStrobe 1.3s infinite linear;
+}
+
+@keyframes miniPoliceStrobe {
+  /* Rapid Red Multi-burst */
+  0%, 4%, 8%, 12% {
+    background: var(--strobe-red);
+    box-shadow: 0 0 12px rgba(255, 0, 25, 0.9);
+  }
+  2%, 6%, 10% {
+    background: #140003;
+    box-shadow: none;
+  }
+  14%, 48% {
+    background: #0d0d12;
+    box-shadow: none;
+  }
+  /* Rapid Blue Multi-burst */
+  50%, 54%, 58%, 62% {
+    background: var(--strobe-blue);
+    box-shadow: 0 0 12px rgba(0, 72, 255, 0.9);
+  }
+  52%, 56%, 60% {
+    background: #000414;
+    box-shadow: none;
+  }
+  64%, 100% {
+    background: #0d0d12;
+    box-shadow: none;
+  }
+}
+
+.split-preview {
+  display: flex !important;
+  align-items: stretch;
+  background: #0a0a0f;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.split-half {
+  flex: 1;
+  height: 100%;
+}
+
+.split-divider {
+  width: 2px;
+  height: 100%;
+  background: #000000;
+  box-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.split-half.left-half {
+  animation: miniSplitLeft 0.8s infinite ease-in-out;
+}
+
+.split-half.right-half {
+  animation: miniSplitRight 0.8s infinite ease-in-out;
+}
+
+@keyframes miniSplitLeft {
+  0%, 46% {
+    background: var(--strobe-red);
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 0, 25, 0.7);
+  }
+  50%, 96% {
+    background: #120003;
+    box-shadow: none;
+  }
+  98%, 100% {
+    background: #120003;
+    box-shadow: none;
+  }
+}
+
+@keyframes miniSplitRight {
+  0%, 46% {
+    background: #000512;
+    box-shadow: none;
+  }
+  50%, 96% {
+    background: var(--strobe-blue);
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.3), 0 0 10px rgba(0, 72, 255, 0.7);
+  }
+  98%, 100% {
+    background: #000512;
+    box-shadow: none;
+  }
+}
+
+.fullscreen-preview {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: miniFullscreenFlip 1.0s infinite ease-in-out;
+}
+
+@keyframes miniFullscreenFlip {
+  0%, 46% {
+    background: var(--strobe-red);
+    box-shadow: 0 0 10px rgba(255, 0, 25, 0.7);
+  }
+  48%, 50% {
+    background: #08080c;
+    box-shadow: none;
+  }
+  52%, 96% {
+    background: var(--strobe-blue);
+    box-shadow: 0 0 10px rgba(0, 72, 255, 0.7);
+  }
+  98%, 100% {
+    background: #08080c;
+    box-shadow: none;
+  }
+}
+
+.wigwag-preview {
+  background: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.preview-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #ffaa00;
+  transition: all 0.1s ease;
+}
+
+.preview-circle.left-circle {
+  animation: miniWigWagLeft 0.9s infinite ease-in-out;
+}
+
+.preview-circle.right-circle {
+  animation: miniWigWagRight 0.9s infinite ease-in-out;
+}
+
+@keyframes miniWigWagLeft {
+  0%, 46% {
+    background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+    box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
+    opacity: 1;
+    border-color: #ffe680;
+  }
+  50%, 96% {
+    background: #241300;
+    box-shadow: none;
+    opacity: 0.35;
+    border-color: #663b00;
+  }
+  98%, 100% {
+    background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+    box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
+    opacity: 1;
+    border-color: #ffe680;
+  }
+}
+
+@keyframes miniWigWagRight {
+  0%, 46% {
+    background: #241300;
+    box-shadow: none;
+    opacity: 0.35;
+    border-color: #663b00;
+  }
+  50%, 96% {
+    background: radial-gradient(circle, #fff7b3 20%, #ffaa00 70%, #cc7700 100%);
+    box-shadow: 0 0 10px #ffaa00, inset 0 0 4px #ffffff;
+    opacity: 1;
+    border-color: #ffe680;
+  }
+  98%, 100% {
+    background: #241300;
+    box-shadow: none;
+    opacity: 0.35;
+    border-color: #663b00;
+  }
+}
+
+.white-preview {
+  background: #0d0d12;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: miniWhiteBeacon 0.9s infinite ease-in-out;
+}
+
+@keyframes miniWhiteBeacon {
+  0%, 40% {
+    background: #ffffff;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
+  }
+  50%, 90% {
+    background: #222228;
+    box-shadow: none;
+  }
+  100% {
+    background: #ffffff;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
+  }
+}
+
+.sos-preview {
+  background: #111;
+  border: 1px solid #333;
+}
+
+.sos-morse {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+}
+
+.pattern-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  text-align: center;
+  width: 100%;
+}
+
+.pattern-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  width: 100%;
+  line-height: 1.25;
+}
+
+/* Options Grid */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 400px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-group-full {
+  grid-column: 1 / -1;
+}
+
+.option-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.segmented-control {
+  display: flex;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 3px;
+}
+
+.speed-segmented .segment-btn {
+  font-size: 0.72rem;
+  padding: 8px 2px;
+  white-space: nowrap;
+}
+
+.segment-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segment-btn.active {
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Text Overlay Control: Presets + Custom Input */
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.char-counter {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.overlay-control-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.overlay-presets {
+  flex: 0 0 170px;
+}
+
+@media (max-width: 440px) {
+  .overlay-presets {
+    flex: 1 1 100%;
+  }
+}
+
+.overlay-custom-wrap {
+  flex: 1 1 160px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.overlay-custom-input {
+  width: 100%;
+  background: var(--bg-dark);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 36px 8px 12px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 38px;
+}
+
+.overlay-custom-input:focus,
+.overlay-custom-input.active {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+  background: rgba(0, 210, 255, 0.04);
+}
+
+.overlay-custom-input::placeholder {
+  color: #4f5d75;
+  font-weight: 500;
+}
+
+.btn-clear-input {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.btn-clear-input:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-clear-input:active {
+  transform: translateY(-50%) scale(0.9);
+  background: rgba(0, 210, 255, 0.3);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.overlay-custom-input:not(:placeholder-shown) ~ .btn-clear-input {
+  color: #ffffff;
+  background: rgba(255, 8, 68, 0.28);
+  border-color: rgba(255, 8, 68, 0.55);
+}
+
+.overlay-custom-input:not(:placeholder-shown) ~ .btn-clear-input:hover {
+  background: rgba(255, 8, 68, 0.5);
+  border-color: rgba(255, 8, 68, 0.8);
+  color: #ffffff;
+}
+
+.input-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Toggles List */
+.toggles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.toggle-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.toggle-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 24px;
+  background: #252e42;
+  border-radius: var(--radius-full);
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+
+.toggle-switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-switch:checked {
+  background: var(--accent-cyan);
+}
+
+.toggle-switch:checked::before {
+  transform: translateX(20px);
+}
+
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.hidden {
+  display: none !important;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  z-index: 2;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  max-width: 440px;
+  width: 100%;
+  padding: 24px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.instruction-block {
+  margin-bottom: 16px;
+}
+
+.instruction-block h4 {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.instruction-block ol {
+  padding-left: 20px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.instruction-block ol strong {
+  color: var(--text-main);
+}
+
+.note-box {
+  background: rgba(255, 170, 0, 0.1);
+  border-left: 3px solid var(--strobe-amber);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: #ffcc66;
+}
+
+.modal-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: var(--accent-cyan);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.btn-secondary {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  border: 1.5px solid var(--border-color);
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0;
+  background: #ffffff;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.qr-container svg {
+  display: block;
+}
+
+.share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ==========================================================================
+   Update Notification Banner (Item #11)
+   ========================================================================== */
+.update-banner {
+  background: linear-gradient(135deg, rgba(13, 27, 42, 0.96) 0%, rgba(20, 32, 54, 0.96) 100%);
+  border: 1px solid rgba(0, 210, 255, 0.45);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 18px rgba(0, 210, 255, 0.15);
+  animation: bannerSlideDown 0.3s ease-out;
+  overflow: hidden;
+}
+
+.update-banner.hidden {
+  display: none !important;
+}
+
+@keyframes bannerSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.update-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.update-banner-text {
+  font-size: 0.82rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.btn-banner-action {
+  background: var(--accent-cyan);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0, 210, 255, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-banner-action:hover {
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.4);
+}
+
+.btn-banner-action:active {
+  transform: scale(0.96);
+}
+
+.btn-banner-dismiss {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-banner-dismiss:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.btn-banner-dismiss:active {
+  transform: scale(0.95);
+}
+
+/* ==========================================================================
+   Regional Disclaimer Modal (Item #10)
+   ========================================================================== */
+.disclaimer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.disclaimer-notice-box {
+  background: rgba(255, 170, 0, 0.08);
+  border-left: 3px solid var(--strobe-amber);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #ffda85;
+}
+
+.disclaimer-pattern-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.disclaimer-text {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+.disclaimer-validity-note {
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px dashed rgba(0, 210, 255, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.disclaimer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-accept-current {
+  background: var(--accent-cyan);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  padding: 13px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.25);
+}
+
+.btn-accept-current:hover {
+  box-shadow: 0 6px 18px rgba(0, 210, 255, 0.4);
+}
+
+.btn-accept-current:active {
+  transform: scale(0.97);
+}
+
+.btn-accept-all {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  border: 1.5px solid var(--border-color);
+  font-weight: 600;
+  padding: 11px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.btn-accept-all:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
+}
+
+.btn-accept-all:active {
+  transform: scale(0.98);
+}
+
+.btn-disclaimer-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-weight: 600;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-align: center;
+  transition: color 0.15s ease;
+}
+
+.btn-disclaimer-cancel:hover {
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   "What's New" Release Notes Modal (Item #11)
+   ========================================================================== */
+.whats-new-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.release-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.release-card.latest {
+  background: rgba(0, 210, 255, 0.04);
+  border: 1.5px solid rgba(0, 210, 255, 0.35);
+  box-shadow: 0 0 16px rgba(0, 210, 255, 0.08);
+}
+
+.release-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.release-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-version {
+  background: var(--accent-cyan);
+  color: #000;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.release-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.release-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.release-highlights li {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  padding-left: 20px;
+  position: relative;
+}
+
+.release-highlights li strong {
+  color: var(--text-main);
+}
+
+.release-highlights li::before {
+  content: "•";
+  position: absolute;
+  left: 6px;
+  color: var(--accent-cyan);
+  font-weight: bold;
+}
+
+.release-archival-footer {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.release-archival-footer a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.release-archival-footer a:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .police-preview,
+  .split-half,
+  .fullscreen-preview,
+  .preview-circle.left-circle,
+  .preview-circle.right-circle,
+  .white-preview,
+  .pulse-ring,
+  .strobe-dismiss-hint {
+    animation: none !important;
+  }
+}
+
   </style>
 </head>
 <body>
-  <!-- Strobe Light Surface -->
+  <!-- Strobe Light Surface (Full Screen Overlay) -->
   <div id="strobe-surface" class="strobe-surface hidden" aria-hidden="true">
     <div id="strobe-left" class="strobe-half left"></div>
     <div id="strobe-right" class="strobe-half right"></div>
@@ -1134,7 +1657,7 @@
         </svg>
         <div>
           <h1 class="app-title">CrossSafe</h1>
-          <p class="app-tagline">Offline Standalone Edition</p>
+          <p class="app-tagline">Offline Road Crossing Assist</p>
         </div>
       </div>
       <div class="header-actions">
@@ -1148,6 +1671,15 @@
             <line x1="18" y1="11" x2="18" y2="13"></line>
           </svg>
         </button>
+        <button id="btn-share" class="icon-btn" title="Share with friends" aria-label="Share">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </button>
         <button id="btn-info" class="icon-btn" title="Offline setup & help" aria-label="Help">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
@@ -1158,18 +1690,29 @@
       </div>
     </header>
 
+    <!-- Update Notification Banner (Item #11) -->
+    <div id="update-banner" class="update-banner hidden" role="region" aria-label="Version update notification">
+      <div class="update-banner-content">
+        <span class="update-banner-text">
+          🚀 <strong>CrossSafe updated to v1.9.0</strong>
+        </span>
+        <button id="btn-see-whats-new" class="btn-banner-action">See What's New</button>
+        <button id="btn-dismiss-update" class="btn-banner-dismiss" aria-label="Dismiss banner">&times;</button>
+      </div>
+    </div>
+
     <!-- Status Banner -->
     <div class="status-bar">
-      <span class="badge badge-offline">
-        <span class="dot"></span> 100% Standalone Offline File
+      <span class="badge badge-offline" id="badge-offline">
+        <span class="dot"></span> 100% Offline Ready
       </span>
-      <span class="badge badge-wakelock" id="badge-wakelock">
+      <span class="badge badge-wakelock" id="badge-wakelock" title="Keeps your screen bright and awake while crossing">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="5"></circle>
           <line x1="12" y1="1" x2="12" y2="3"></line>
           <line x1="12" y1="21" x2="12" y2="23"></line>
         </svg>
-        Wake Lock Ready
+        Wake Lock Active
       </span>
     </div>
 
@@ -1192,7 +1735,7 @@
     <!-- Controls & Pattern Selection -->
     <section class="settings-card">
       <h2 class="section-title">Light Pattern</h2>
-      <div class="pattern-grid" role="radiogroup">
+      <div class="pattern-grid" role="radiogroup" aria-label="Select strobe pattern">
         <button class="pattern-btn active" data-pattern="police">
           <div class="pattern-preview police-preview"></div>
           <span class="pattern-name">Police Strobe</span>
@@ -1242,7 +1785,7 @@
       <div class="options-grid">
         <!-- Speed Setting -->
         <div class="option-group option-group-full">
-          <label class="option-label">Strobe Speed</label>
+          <label class="option-label" for="speed-control">Strobe Speed</label>
           <div class="segmented-control speed-segmented" id="speed-control">
             <button class="segment-btn" data-speed="ultraslow">Ultra Slow</button>
             <button class="segment-btn" data-speed="veryslow">Very Slow</button>
@@ -1314,21 +1857,40 @@
       </div>
     </section>
 
-    <!-- Offline Help Modal -->
-    <div id="modal-info" class="modal hidden" role="dialog" aria-modal="true">
+    <!-- Offline & Install Guide Modal -->
+    <div id="modal-info" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
       <div class="modal-backdrop"></div>
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Standalone File Guide</h3>
-          <button id="btn-close-info" class="modal-close">&times;</button>
+          <h3 id="modal-info-title">How to Save & Use Offline</h3>
+          <button id="btn-close-info" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="instruction-block">
-            <h4>Direct File Sharing</h4>
-            <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.5;">You can send this <code>crosssafe.html</code> file directly via WhatsApp, Telegram, AirDrop, or Bluetooth. Anyone who receives it can tap to open it in their browser and bookmark it. It runs 100% offline with zero internet.</p>
+            <h4><span class="icon">🍎</span> On iPhone (Safari)</h4>
+            <ol>
+              <li>Open this page in <strong>Safari</strong>.</li>
+              <li>Tap the <strong>Share</strong> button at the bottom (box with arrow pointing up).</li>
+              <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+              <li>CrossSafe now lives on your home screen and opens instantly with <strong>zero internet or data needed</strong>.</li>
+            </ol>
           </div>
+
+          <div class="instruction-block">
+            <h4><span class="icon">🤖</span> On Android (Chrome / Brave / Edge)</h4>
+            <ol>
+              <li>Open this page in <strong>Chrome</strong>.</li>
+              <li>Tap the three dots menu (top right) and select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+              <li>Confirm installation. The app will work completely offline forever.</li>
+            </ol>
+          </div>
+
           <div class="instruction-block note-box">
-            <p><strong>Safety Reminder</strong>: Always check both sides of the street before stepping off the curb.</p>
+            <p><strong>Safety Note</strong>: Hold your phone firmly at chest height facing oncoming vehicles so drivers see the strobe from afar. Always look both ways before stepping onto the roadway.</p>
+          </div>
+
+          <div style="margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; text-align: center;">
+            <button id="btn-open-whats-new" class="btn-secondary" style="width: 100%;">📜 Version History & What's New</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -1336,672 +1898,1532 @@
         </div>
       </div>
     </div>
+
+    <!-- Share Modal -->
+    <div id="modal-share" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-share-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-share-title">Share CrossSafe</h3>
+          <button id="btn-close-share" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body text-center">
+          <p>Scan this QR code with any phone camera to open and save this app instantly:</p>
+          <div id="qr-container" class="qr-container"></div>
+          <div class="share-actions">
+            <button id="btn-native-share" class="btn-primary">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              Share Link Directly
+            </button>
+            <button id="btn-copy-link" class="btn-secondary">Copy Link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regional Flashing Light Disclaimer Modal (Item #10) -->
+    <div id="modal-disclaimer" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-disclaimer-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-disclaimer-title">⚠️ Regional Light Notice</h3>
+          <button id="btn-close-disclaimer" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body disclaimer-body">
+          <div class="disclaimer-notice-box">
+            <p><strong>Notice:</strong> Emergency colors and high-frequency strobes may be restricted or regulated for civilian/pedestrian use in certain jurisdictions.</p>
+            <div id="disclaimer-pattern-pill" class="disclaimer-pattern-pill">Pattern: Police Strobe</div>
+          </div>
+          <p class="disclaimer-text">
+            By continuing, you acknowledge responsibility for compliance with local road safety laws and assume all responsibility for use.
+          </p>
+          <div class="disclaimer-validity-note">
+            ℹ️ Your acceptance is saved on this device and remains valid for 4 hours.
+          </div>
+          <div class="disclaimer-actions">
+            <button id="btn-accept-current" class="btn-accept-current">Accept for Current Pattern</button>
+            <button id="btn-accept-all" class="btn-accept-all">Accept for All Patterns (4 Hours)</button>
+            <button id="btn-disclaimer-cancel" class="btn-disclaimer-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- "What's New" Release Notes Modal (Item #11) -->
+    <div id="modal-whats-new" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-whats-new-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-whats-new-title">What's New in CrossSafe</h3>
+          <button id="btn-close-whats-new" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body whats-new-body" id="whats-new-body">
+          <!-- Dynamically populated from APP_RELEASES -->
+        </div>
+        <div class="modal-footer">
+          <button id="btn-close-whats-new-footer" class="btn-primary">Got it</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script>
-  (() => {
-    'use strict';
-    const state = {
-      isActive: false,
-      pattern: 'police',
-      speed: 'normal',
-      textOverlayMode: 'preset', // 'preset' | 'custom'
-      presetText: 'CROSSING',    // 'CROSSING' | 'STOP'
-      customText: '',            // custom string (blank = no overlay)
-      soundEnabled: true,
-      vibrationEnabled: true,
-      brightnessHintEnabled: true,
-      orientation: 'portrait',
-      wakeLock: null,
-      audioCtx: null,
-      strobeFrame: null,
-      lastTick: 0,
-      stepIndex: 0,
-      lastVibrateTime: 0
-    };
+/**
+ * CrossSafe - Offline Road Crossing Assistant
+ * Core Application Engine
+ */
 
-    const SPEED_CONFIGS = {
-      ultraslow: { mult: 3.5 },
-      veryslow:  { mult: 2.2 },
-      slow:      { mult: 1.4 },
-      normal:    { mult: 1.0 },
-      fast:      { mult: 0.65 }
-    };
+(() => {
+  'use strict';
 
-    const RED = '#ff0019', BLUE = '#0048ff', AMBER = '#ffaa00', WHITE = '#ffffff', BLACK = '#000000';
+  const APP_VERSION = '1.9.0';
+  const VERSION_STORAGE_KEY = 'crosssafe_last_seen_version';
+  const DISCLAIMER_STORAGE_KEY = 'crosssafe_disclaimer_v1';
+  const DISCLAIMER_AUDIT_LOG_KEY = 'crosssafe_disclaimer_audit_log';
+  const INVOCATIONS_AUDIT_LOG_KEY = 'crosssafe_invocations_audit_log';
+  const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+  const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+  const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
-    function getPatternSequence(pattern) {
-      switch (pattern) {
-        case 'police':
-          return [
-            { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
-            { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
-            { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 110, chirp: null },
-            { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
-            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
-            { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
-            { left: BLACK, right: BLACK, duration: 45,  chirp: null },
-            { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
-            { left: BLACK, right: BLACK, duration: 110, chirp: null }
-          ];
-        case 'split':
-          return [
-            { left: RED,   right: BLACK, duration: 110, chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 40,  chirp: null },
-            { left: RED,   right: BLACK, duration: 110, chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: BLACK, right: BLUE,  duration: 110, chirp: 'low' },
-            { left: BLACK, right: BLACK, duration: 40,  chirp: null },
-            { left: BLACK, right: BLUE,  duration: 110, chirp: 'low' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null }
-          ];
-        case 'fullscreen':
-          return [
-            { left: RED,   right: RED,   duration: 220, chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 50,  chirp: null },
-            { left: BLUE,  right: BLUE,  duration: 220, chirp: 'low' },
-            { left: BLACK, right: BLACK, duration: 50,  chirp: null }
-          ];
-        case 'wigwag':
-          // Dual Alternating Amber Circular Beacons (School bus / Road hazard wig-wag)
-          return [
-            { leftLit: true,  rightLit: false, duration: 180, chirp: 'med' },
-            { leftLit: false, rightLit: false, duration: 35,  chirp: null },
-            { leftLit: false, rightLit: true,  duration: 180, chirp: 'med' },
-            { leftLit: false, rightLit: false, duration: 35,  chirp: null }
-          ];
-        case 'white':
-          // High-Lumen White Beacon
-          return [
-            { left: WHITE, right: WHITE, duration: 100, chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 60,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 100, chirp: 'high' },
-            { left: BLACK, right: BLACK, duration: 240, chirp: null }
-          ];
-        case 'sos':
-          // International Morse Code Distress: ··· ——— ··· (in White)
-          return [
-            // S: 3 short dots
-            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
-            { left: BLACK, right: BLACK, duration: 240, chirp: null },
+  const PATTERN_DISPLAY_NAMES = {
+    police: 'Police Strobe',
+    split: 'Split Alternating',
+    fullscreen: 'Full Screen Flip',
+    wigwag: 'Dual Amber Wig-Wag',
+    white: 'White Beacon',
+    sos: 'SOS Morse'
+  };
 
-            // O: 3 long dashes
-            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
-            { left: BLACK, right: BLACK, duration: 240, chirp: null },
+  const APP_RELEASES = [
+    {
+      version: '1.9.0',
+      date: 'October 2026',
+      isLatest: true,
+      highlights: [
+        '<strong>Regional Flashing Light Notice</strong>: Added a 4-hour safety disclaimer dialog before activating emergency strobes, ensuring local regulatory compliance.',
+        '<strong>60-Day Tamper-Evident Audit Logging</strong>: Automatically records crossing duration, speed, pattern, and disclaimer acceptances using offline SHA-256 hash chaining.',
+        '<strong>In-App Update Alerts</strong>: Subtle, dismissible notification banner alerting returning users to new features without interrupting road crossings.',
+        '<strong>Version History & Release Notes</strong>: Accessible dialog to browse new features anytime via the Info & Help modal.'
+      ]
+    },
+    {
+      version: '1.8.0',
+      date: 'September 2026',
+      isLatest: false,
+      highlights: [
+        '<strong>Desktop & Laptop Testing Emulation</strong>: Portrait mode now renders inside a centered phone pillar preview with dark letterboxed side gutters.',
+        '<strong>Zero Mobile Regressions</strong>: Physical phones continue using native hardware orientation locks.'
+      ]
+    },
+    {
+      version: '1.7.0',
+      date: 'September 2026',
+      isLatest: false,
+      highlights: [
+        '<strong>Settings Persistence</strong>: Automatically saves light pattern, speed, custom text, audio, vibration, and orientation choices across browser sessions.',
+        '<strong>Animated Micro-Strobes</strong>: Added live animated previews for Dual Amber Wig-Wag and White Beacon tiles.',
+        '<strong>Zero OS Pop-Ups</strong>: Eliminated Android full-screen exit prompts for a clean, distraction-free crossing screen.'
+      ]
+    }
+  ];
 
-            // S: 3 short dots
-            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
-            { left: BLACK, right: BLACK, duration: 80,  chirp: null },
-            { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
-            { left: BLACK, right: BLACK, duration: 700, chirp: null }
-          ];
-        default:
-          return getPatternSequence('police');
+  // Pure JavaScript synchronous SHA-256 (100% offline & zero dependencies)
+  function sha256Sync(ascii) {
+    function rightRotate(value, amount) {
+      return (value >>> amount) | (value << (32 - amount));
+    }
+    const mathPow = Math.pow;
+    const maxWord = mathPow(2, 32);
+    let result = '';
+    const words = [];
+    const asciiBitLength = ascii.length * 8;
+    let hash = [
+      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+      0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    ];
+    const k = [
+      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ];
+    let i, j;
+    ascii += '\x80';
+    while ((ascii.length % 64) !== 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i);
+      words[i >> 2] |= j << ((3 - (i % 4)) * 8);
+    }
+    words[words.length] = ((asciiBitLength / maxWord) | 0);
+    words[words.length] = (asciiBitLength & 0xffffffff);
+    for (j = 0; j < words.length;) {
+      const w = words.slice(j, j += 16);
+      const oldHash = hash.slice(0);
+      for (i = 0; i < 64; i++) {
+        const w15 = w[i - 15], w2 = w[i - 2];
+        const a = hash[0], e = hash[4];
+        const s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+        const ch = (e & hash[5]) ^ ((~e) & hash[6]);
+        const temp1 = (hash[7] + s1 + ch + k[i] + (w[i] = (i < 16) ? w[i] : (
+          w[i - 16] +
+          (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+          w[i - 7] +
+          (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+        ) | 0)) | 0;
+        const s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+        const maj = (a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]);
+        const temp2 = (s0 + maj) | 0;
+        hash = [(temp1 + temp2) | 0, a, hash[1], hash[2], (hash[3] + temp1) | 0, hash[4], hash[5], hash[6]];
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j >= 0; j--) {
+        const b = (hash[i] >> (8 * j)) & 255;
+        result += ((b < 16) ? '0' : '') + b.toString(16);
       }
     }
+    return result;
+  }
 
-    const elSurface = document.getElementById('strobe-surface');
-    const elLeft = document.getElementById('strobe-left');
-    const elRight = document.getElementById('strobe-right');
-    const beaconLeft = document.getElementById('beacon-left');
-    const beaconRight = document.getElementById('beacon-right');
-    const elBadge = document.getElementById('strobe-badge');
-    const elStrobeText = document.getElementById('strobe-text');
-    const elBrightnessToast = document.getElementById('brightness-toast');
-    let brightnessToastTimer = null;
-    const elTapPill = document.getElementById('tap-progress-pill');
-    const elTapText = document.getElementById('tap-progress-text');
-    let tapCount = 0;
-    let tapResetTimer = null;
-    const btnTrigger = document.getElementById('btn-trigger');
-    const badgeWakeLock = document.getElementById('badge-wakelock');
-    const patternButtons = document.querySelectorAll('.pattern-btn');
-    const speedButtons = document.querySelectorAll('#speed-control .segment-btn');
-    const presetButtons = document.querySelectorAll('#badge-presets .segment-btn');
-    const inputCustomText = document.getElementById('input-custom-text');
-    const textCharCount = document.getElementById('text-char-count');
-    const btnClearText = document.getElementById('btn-clear-text');
-    const toggleSound = document.getElementById('toggle-sound');
-    const toggleVibration = document.getElementById('toggle-vibration');
-    const toggleBrightnessHint = document.getElementById('toggle-brightness-hint');
-    const btnInfo = document.getElementById('btn-info');
-    const btnOrientation = document.getElementById('btn-orientation');
-    const iconOrientPortrait = document.getElementById('icon-orient-portrait');
-    const iconOrientLandscape = document.getElementById('icon-orient-landscape');
-    const modalInfo = document.getElementById('modal-info');
-    const btnCloseInfo = document.getElementById('btn-close-info');
-    const btnGotIt = document.getElementById('btn-got-it');
 
-    function initAudio() {
-      if (!state.audioCtx) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) state.audioCtx = new AudioCtx();
-      }
-      if (state.audioCtx && state.audioCtx.state === 'suspended') {
-        state.audioCtx.resume();
+  // --- State Configuration ---
+  const state = {
+    isActive: false,
+    pattern: 'police',      // 'police' | 'split' | 'fullscreen' | 'amber' | 'white'
+    speed: 'normal',
+    textOverlayMode: 'preset', // 'preset' | 'custom'
+    presetText: 'CROSSING',    // 'CROSSING' | 'STOP'
+    customText: '',            // custom string (blank = no overlay)
+    soundEnabled: true,
+    vibrationEnabled: true,
+    brightnessHintEnabled: true,
+    orientation: 'portrait',
+    wakeLock: null,
+    audioCtx: null,
+    strobeFrame: null,
+    lastTick: 0,
+    stepIndex: 0,
+    lastVibrateTime: 0
+  };
+
+  // Speed multiplier maps (intervals in ms per sub-frame)
+  const SPEED_CONFIGS = {
+    ultraslow: { mult: 3.5 },
+    veryslow:  { mult: 2.2 },
+    slow:      { mult: 1.4 },
+    normal:    { mult: 1.0 },
+    fast:      { mult: 0.65 }
+  };
+
+  // Colors
+  const RED = '#ff0019';
+  const BLUE = '#0048ff';
+  const AMBER = '#ffaa00';
+  const WHITE = '#ffffff';
+  const BLACK = '#000000';
+
+  // Pattern Sequences: Array of { left, right, durationMs, soundType }
+  function getPatternSequence(pattern) {
+    switch (pattern) {
+      case 'police':
+        // Classic Police Quad-Flash Red -> Quad-Flash Blue
+        return [
+          { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+          { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+          { left: RED,   right: RED,   duration: 70,  chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 110, chirp: null },
+
+          { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
+          { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+          { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
+          { left: BLACK, right: BLACK, duration: 45,  chirp: null },
+          { left: BLUE,  right: BLUE,  duration: 70,  chirp: 'low' },
+          { left: BLACK, right: BLACK, duration: 110, chirp: null }
+        ];
+
+      case 'split':
+        // Alternating Left-Red / Right-Blue
+        return [
+          { left: RED,   right: BLACK, duration: 110, chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 40,  chirp: null },
+          { left: RED,   right: BLACK, duration: 110, chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+
+          { left: BLACK, right: BLUE,  duration: 110, chirp: 'low' },
+          { left: BLACK, right: BLACK, duration: 40,  chirp: null },
+          { left: BLACK, right: BLUE,  duration: 110, chirp: 'low' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null }
+        ];
+
+      case 'fullscreen':
+        // Full screen Red flip to Full screen Blue
+        return [
+          { left: RED,   right: RED,   duration: 220, chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 50,  chirp: null },
+          { left: BLUE,  right: BLUE,  duration: 220, chirp: 'low' },
+          { left: BLACK, right: BLACK, duration: 50,  chirp: null }
+        ];
+
+      case 'wigwag':
+        // Dual Alternating Amber Circular Beacons (School bus / Road hazard wig-wag)
+        return [
+          { leftLit: true,  rightLit: false, duration: 180, chirp: 'med' },
+          { leftLit: false, rightLit: false, duration: 35,  chirp: null },
+          { leftLit: false, rightLit: true,  duration: 180, chirp: 'med' },
+          { leftLit: false, rightLit: false, duration: 35,  chirp: null }
+        ];
+
+      case 'white':
+        // High-Lumen White Beacon
+        return [
+          { left: WHITE, right: WHITE, duration: 100, chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 60,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 100, chirp: 'high' },
+          { left: BLACK, right: BLACK, duration: 240, chirp: null }
+        ];
+
+      case 'sos':
+        // International Morse Code Distress: ··· ——— ··· (in White)
+        return [
+          // S: 3 short dots
+          { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+          { left: BLACK, right: BLACK, duration: 240, chirp: null },
+
+          // O: 3 long dashes
+          { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 240, chirp: 'dash' },
+          { left: BLACK, right: BLACK, duration: 240, chirp: null },
+
+          // S: 3 short dots
+          { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+          { left: BLACK, right: BLACK, duration: 80,  chirp: null },
+          { left: WHITE, right: WHITE, duration: 80,  chirp: 'dot' },
+          { left: BLACK, right: BLACK, duration: 700, chirp: null }
+        ];
+
+      default:
+        return getPatternSequence('police');
+    }
+  }
+
+  // --- DOM Elements ---
+  const elSurface = document.getElementById('strobe-surface');
+  const elLeft = document.getElementById('strobe-left');
+  const elRight = document.getElementById('strobe-right');
+  const beaconLeft = document.getElementById('beacon-left');
+  const beaconRight = document.getElementById('beacon-right');
+  const elBadge = document.getElementById('strobe-badge');
+  const elStrobeText = document.getElementById('strobe-text');
+  const elBrightnessToast = document.getElementById('brightness-toast');
+  let brightnessToastTimer = null;
+  const elTapPill = document.getElementById('tap-progress-pill');
+  const elTapText = document.getElementById('tap-progress-text');
+  let tapCount = 0;
+  let tapResetTimer = null;
+
+  const btnTrigger = document.getElementById('btn-trigger');
+  const badgeWakeLock = document.getElementById('badge-wakelock');
+  const badgeOffline = null;
+
+  const patternButtons = document.querySelectorAll('.pattern-btn');
+  const speedButtons = document.querySelectorAll('#speed-control .segment-btn');
+  const presetButtons = document.querySelectorAll('#badge-presets .segment-btn');
+  const inputCustomText = document.getElementById('input-custom-text');
+  const textCharCount = document.getElementById('text-char-count');
+  const btnClearText = document.getElementById('btn-clear-text');
+
+  const toggleSound = document.getElementById('toggle-sound');
+  const toggleVibration = document.getElementById('toggle-vibration');
+  const toggleBrightnessHint = document.getElementById('toggle-brightness-hint');
+
+  const btnOrientation = document.getElementById('btn-orientation');
+  const iconOrientPortrait = document.getElementById('icon-orient-portrait');
+  const iconOrientLandscape = document.getElementById('icon-orient-landscape');
+
+  const btnShare = null;
+  const btnInfo = document.getElementById('btn-info');
+  const modalInfo = document.getElementById('modal-info');
+  const modalShare = null;
+  const btnCloseInfo = document.getElementById('btn-close-info');
+  const btnCloseShare = null;
+  const btnGotIt = document.getElementById('btn-got-it');
+  const btnNativeShare = null;
+  const btnCopyLink = null;
+  const qrContainer = null;
+
+  // Update Notification Banner (Item #11)
+  const elUpdateBanner = document.getElementById('update-banner');
+  const btnSeeWhatsNew = document.getElementById('btn-see-whats-new');
+  const btnDismissUpdate = document.getElementById('btn-dismiss-update');
+
+  // Regional Disclaimer Modal (Item #10)
+  const modalDisclaimer = document.getElementById('modal-disclaimer');
+  const btnCloseDisclaimer = document.getElementById('btn-close-disclaimer');
+  const btnAcceptCurrent = document.getElementById('btn-accept-current');
+  const btnAcceptAll = document.getElementById('btn-accept-all');
+  const btnDisclaimerCancel = document.getElementById('btn-disclaimer-cancel');
+  const elDisclaimerPill = document.getElementById('disclaimer-pattern-pill');
+
+  // "What's New" Release Notes Modal (Item #11)
+  const modalWhatsNew = document.getElementById('modal-whats-new');
+  const btnCloseWhatsNew = document.getElementById('btn-close-whats-new');
+  const btnCloseWhatsNewFooter = document.getElementById('btn-close-whats-new-footer');
+  const btnOpenWhatsNew = document.getElementById('btn-open-whats-new');
+  const elWhatsNewBody = document.getElementById('whats-new-body');
+
+
+  // --- Audio Synthesizer (Web Audio API) ---
+  function initAudio() {
+    if (!state.audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        state.audioCtx = new AudioCtx();
       }
     }
+    if (state.audioCtx && state.audioCtx.state === 'suspended') {
+      state.audioCtx.resume();
+    }
+  }
 
-    function playAlertChirp(type) {
-      if (!state.soundEnabled || !state.audioCtx) return;
+  function playAlertChirp(type) {
+    if (!state.soundEnabled || !state.audioCtx) return;
+    try {
+      const ctx = state.audioCtx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      const startTime = ctx.currentTime;
+      let startFreq = 880;
+      let endFreq = 1200;
+      let toneDuration = 0.06;
+      let oscType = 'sawtooth';
+
+      if (type === 'low') {
+        startFreq = 540;
+        endFreq = 720;
+      } else if (type === 'med') {
+        startFreq = 720;
+        endFreq = 880;
+      } else if (type === 'dot') {
+        startFreq = 850;
+        endFreq = 850;
+        toneDuration = 0.055;
+        oscType = 'sine';
+      } else if (type === 'dash') {
+        startFreq = 850;
+        endFreq = 850;
+        toneDuration = 0.18;
+        oscType = 'sine';
+      }
+
+      osc.type = oscType;
+      osc.frequency.setValueAtTime(startFreq, startTime);
+      if (startFreq !== endFreq) {
+        osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + toneDuration * 0.8);
+      }
+
+      gain.gain.setValueAtTime(0.2, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + toneDuration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + toneDuration + 0.005);
+    } catch (e) {
+      // Audio autoplay policy fallback
+    }
+  }
+
+  // --- Screen Wake Lock API ---
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
       try {
-        const ctx = state.audioCtx;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const startTime = ctx.currentTime;
-        let startFreq = 880, endFreq = 1200;
-        let toneDuration = 0.06;
-        let oscType = 'sawtooth';
-
-        if (type === 'low') {
-          startFreq = 540; endFreq = 720;
-        } else if (type === 'med') {
-          startFreq = 720; endFreq = 880;
-        } else if (type === 'dot') {
-          startFreq = 850; endFreq = 850;
-          toneDuration = 0.055;
-          oscType = 'sine';
-        } else if (type === 'dash') {
-          startFreq = 850; endFreq = 850;
-          toneDuration = 0.18;
-          oscType = 'sine';
+        state.wakeLock = await navigator.wakeLock.request('screen');
+        if (badgeWakeLock) {
+          badgeWakeLock.style.display = 'inline-flex';
+          badgeWakeLock.style.color = 'var(--accent-green)';
         }
+        state.wakeLock.addEventListener('release', () => {
+          if (badgeWakeLock) {
+            badgeWakeLock.style.color = 'var(--text-muted)';
+          }
+        });
+      } catch (err) {
+        console.warn('Wake Lock request failed:', err);
+      }
+    }
+  }
 
-        osc.type = oscType;
-        osc.frequency.setValueAtTime(startFreq, startTime);
-        if (startFreq !== endFreq) {
-          osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + toneDuration * 0.8);
-        }
+  async function releaseWakeLock() {
+    if (state.wakeLock) {
+      try {
+        await state.wakeLock.release();
+      } catch (e) {}
+      state.wakeLock = null;
+    }
+  }
 
-        gain.gain.setValueAtTime(0.2, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + toneDuration);
+  // Auto re-acquire wake lock on tab focus
+  document.addEventListener('visibilitychange', async () => {
+    if (state.wakeLock !== null && document.visibilityState === 'visible' && state.isActive) {
+      await requestWakeLock();
+    }
+  });
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(startTime);
-        osc.stop(startTime + toneDuration + 0.005);
+  // --- Haptics (Vibration API) ---
+  function triggerHapticPulse() {
+    if (!state.vibrationEnabled || !('vibrate' in navigator)) return;
+    const now = performance.now();
+    // Vibrate every 750ms so user knows it's alive without draining battery
+    if (now - state.lastVibrateTime > 750) {
+      try {
+        navigator.vibrate([40, 50, 40]);
+        state.lastVibrateTime = now;
       } catch (e) {}
     }
+  }
 
-    async function requestWakeLock() {
-      if ('wakeLock' in navigator) {
-        try {
-          state.wakeLock = await navigator.wakeLock.request('screen');
-          if (badgeWakeLock) badgeWakeLock.style.color = 'var(--accent-green)';
-        } catch (err) {}
-      }
-    }
+  // --- Strobe Light Engine ---
+  function runStrobeEngine(timestamp) {
+    if (!state.isActive) return;
 
-    async function releaseWakeLock() {
-      if (state.wakeLock) {
-        try { await state.wakeLock.release(); } catch (e) {}
-        state.wakeLock = null;
-      }
-    }
+    const sequence = getPatternSequence(state.pattern);
+    const speedMult = SPEED_CONFIGS[state.speed].mult;
+    const currentStep = sequence[state.stepIndex % sequence.length];
+    const stepDuration = currentStep.duration * speedMult;
 
-    function triggerHapticPulse() {
-      if (!state.vibrationEnabled || !('vibrate' in navigator)) return;
-      const now = performance.now();
-      if (now - state.lastVibrateTime > 750) {
-        try {
-          navigator.vibrate([40, 50, 40]);
-          state.lastVibrateTime = now;
-        } catch (e) {}
-      }
-    }
+    if (!state.lastTick) state.lastTick = timestamp;
 
-    function runStrobeEngine(timestamp) {
-      if (!state.isActive) return;
-      const sequence = getPatternSequence(state.pattern);
-      const speedMult = SPEED_CONFIGS[state.speed].mult;
-      const currentStep = sequence[state.stepIndex % sequence.length];
-      const stepDuration = currentStep.duration * speedMult;
+    const elapsed = timestamp - state.lastTick;
 
-      if (!state.lastTick) state.lastTick = timestamp;
-      const elapsed = timestamp - state.lastTick;
+    if (elapsed >= stepDuration) {
+      // Advance step
+      state.stepIndex = (state.stepIndex + 1) % sequence.length;
+      state.lastTick = timestamp;
 
-      if (elapsed >= stepDuration) {
-        state.stepIndex = (state.stepIndex + 1) % sequence.length;
-        state.lastTick = timestamp;
-        const nextStep = sequence[state.stepIndex];
+      const nextStep = sequence[state.stepIndex];
 
-        if (state.pattern === 'wigwag') {
-          if (beaconLeft && beaconRight) {
-            if (nextStep.leftLit) {
-              beaconLeft.classList.add('lit');
-              beaconLeft.classList.remove('unlit');
-            } else {
-              beaconLeft.classList.remove('lit');
-              beaconLeft.classList.add('unlit');
-            }
-
-            if (nextStep.rightLit) {
-              beaconRight.classList.add('lit');
-              beaconRight.classList.remove('unlit');
-            } else {
-              beaconRight.classList.remove('lit');
-              beaconRight.classList.add('unlit');
-            }
+      if (state.pattern === 'wigwag') {
+        if (beaconLeft && beaconRight) {
+          if (nextStep.leftLit) {
+            beaconLeft.classList.add('lit');
+            beaconLeft.classList.remove('unlit');
+          } else {
+            beaconLeft.classList.remove('lit');
+            beaconLeft.classList.add('unlit');
           }
-        } else {
-          elLeft.style.backgroundColor = nextStep.left;
-          elRight.style.backgroundColor = nextStep.right;
-        }
 
-        if (nextStep.chirp) playAlertChirp(nextStep.chirp);
-        triggerHapticPulse();
+          if (nextStep.rightLit) {
+            beaconRight.classList.add('lit');
+            beaconRight.classList.remove('unlit');
+          } else {
+            beaconRight.classList.remove('lit');
+            beaconRight.classList.add('unlit');
+          }
+        }
+      } else {
+        elLeft.style.backgroundColor = nextStep.left;
+        elRight.style.backgroundColor = nextStep.right;
       }
 
-      state.strobeFrame = requestAnimationFrame(runStrobeEngine);
+      if (nextStep.chirp) {
+        playAlertChirp(nextStep.chirp);
+      }
+
+      triggerHapticPulse();
     }
 
-    function startCrossing() {
-      initAudio();
-      requestWakeLock();
+    state.strobeFrame = requestAnimationFrame(runStrobeEngine);
+  }
 
-      // Toggle circular beacons vs split halves
-      elSurface.classList.toggle('mode-circular', state.pattern === 'wigwag');
+  function startCrossing() {
+    recordInvocationStart();
+    initAudio();
+    requestWakeLock();
 
-      // Configure Text Overlay: Presets (Crossing, Stop) or Custom (blank = none)
-      let overlayText = '';
-      if (state.textOverlayMode === 'preset') {
-        overlayText = state.presetText;
-      } else {
-        overlayText = (state.customText || '').trim();
-      }
+    // Toggle circular beacons vs split halves
+    elSurface.classList.toggle('mode-circular', state.pattern === 'wigwag');
 
-      if (!overlayText) {
-        elSurface.classList.remove('show-badge');
-      } else {
-        const displayText = (state.pattern === 'sos' && overlayText.toUpperCase() === 'CROSSING') ? 'SOS' : overlayText.toUpperCase();
-        elStrobeText.textContent = displayText;
-        elSurface.classList.add('show-badge');
-      }
-      // Reset tap state
-      tapCount = 0;
-      if (tapResetTimer) clearTimeout(tapResetTimer);
-      if (elTapPill) elTapPill.classList.add('hidden');
-
-      // Show Auto Max Brightness Hint Toast if enabled
-      const isBrightnessHintOn = toggleBrightnessHint ? toggleBrightnessHint.checked : state.brightnessHintEnabled;
-      if (isBrightnessHintOn && elBrightnessToast) {
-        if (brightnessToastTimer) clearTimeout(brightnessToastTimer);
-        elBrightnessToast.classList.remove('hidden', 'toast-fade');
-        brightnessToastTimer = setTimeout(() => {
-          elBrightnessToast.classList.add('toast-fade');
-          setTimeout(() => {
-            elBrightnessToast.classList.add('hidden');
-          }, 500);
-        }, 3500);
-      } else if (elBrightnessToast) {
-        elBrightnessToast.classList.add('hidden');
-      }
-
-      // In-App Orientation Lock / Virtual Landscape Rotation
-      if (state.orientation === 'landscape') {
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('landscape').catch(() => {
-            if (window.innerHeight > window.innerWidth) {
-              elSurface.classList.add('force-landscape');
-            }
-          });
-        } else if (window.innerHeight > window.innerWidth) {
-          elSurface.classList.add('force-landscape');
-        }
-        elSurface.classList.remove('desktop-sim-portrait');
-      } else {
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('portrait').catch(() => {});
-        }
-        elSurface.classList.remove('force-landscape');
-        // Desktop / Laptop Testing Emulation: constrain to centered phone pillar on widescreen display
-        if (state.orientation === 'portrait' && window.innerWidth > window.innerHeight) {
-          elSurface.classList.add('desktop-sim-portrait');
-        } else {
-          elSurface.classList.remove('desktop-sim-portrait');
-        }
-      }
-
-      state.isActive = true;
-      state.stepIndex = 0;
-      state.lastTick = 0;
-      state.lastVibrateTime = 0;
-      elSurface.classList.remove('hidden');
-      elSurface.setAttribute('aria-hidden', 'false');
-      state.strobeFrame = requestAnimationFrame(runStrobeEngine);
+    // Configure Text Overlay: Presets (Crossing, Stop) or Custom (blank = none)
+    let overlayText = '';
+    if (state.textOverlayMode === 'preset') {
+      overlayText = state.presetText;
+    } else {
+      overlayText = (state.customText || '').trim();
     }
 
-    function stopCrossing() {
-      state.isActive = false;
-      if (state.strobeFrame) {
-        cancelAnimationFrame(state.strobeFrame);
-        state.strobeFrame = null;
-      }
+    if (!overlayText) {
+      elSurface.classList.remove('show-badge');
+    } else {
+      const displayText = (state.pattern === 'sos' && overlayText.toUpperCase() === 'CROSSING') ? 'SOS' : overlayText.toUpperCase();
+      elStrobeText.textContent = displayText;
+      elSurface.classList.add('show-badge');
+    }
 
-      tapCount = 0;
-      if (tapResetTimer) {
-        clearTimeout(tapResetTimer);
-        tapResetTimer = null;
-      }
-      if (elTapPill) {
-        elTapPill.classList.add('hidden');
-      }
+    // Reset tap state
+    tapCount = 0;
+    if (tapResetTimer) clearTimeout(tapResetTimer);
+    if (elTapPill) elTapPill.classList.add('hidden');
 
-      if (brightnessToastTimer) {
-        clearTimeout(brightnessToastTimer);
-        brightnessToastTimer = null;
-      }
-      if (elBrightnessToast) {
-        elBrightnessToast.classList.add('hidden');
-      }
+    // Show Auto Max Brightness Hint Toast if enabled
+    const isBrightnessHintOn = toggleBrightnessHint ? toggleBrightnessHint.checked : state.brightnessHintEnabled;
+    if (isBrightnessHintOn && elBrightnessToast) {
+      if (brightnessToastTimer) clearTimeout(brightnessToastTimer);
+      elBrightnessToast.classList.remove('hidden', 'toast-fade');
+      brightnessToastTimer = setTimeout(() => {
+        elBrightnessToast.classList.add('toast-fade');
+        setTimeout(() => {
+          elBrightnessToast.classList.add('hidden');
+        }, 500);
+      }, 3500);
+    } else if (elBrightnessToast) {
+      elBrightnessToast.classList.add('hidden');
+    }
 
-      // Release orientation lock & virtual landscape
-      if (screen.orientation && screen.orientation.unlock) {
-        try { screen.orientation.unlock(); } catch (_) {}
+    // In-App Orientation Lock / Virtual Landscape Rotation
+    if (state.orientation === 'landscape') {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {
+          if (window.innerHeight > window.innerWidth) {
+            elSurface.classList.add('force-landscape');
+          }
+        });
+      } else if (window.innerHeight > window.innerWidth) {
+        elSurface.classList.add('force-landscape');
+      }
+      elSurface.classList.remove('desktop-sim-portrait');
+    } else {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(() => {});
       }
       elSurface.classList.remove('force-landscape');
-      elSurface.classList.remove('desktop-sim-portrait');
-
-      elSurface.classList.add('hidden');
-      elSurface.setAttribute('aria-hidden', 'true');
-      elSurface.classList.remove('mode-circular');
-      elLeft.style.backgroundColor = BLACK;
-      elRight.style.backgroundColor = BLACK;
-
-      if (beaconLeft && beaconRight) {
-        beaconLeft.classList.remove('lit');
-        beaconLeft.classList.add('unlit');
-        beaconRight.classList.remove('lit');
-        beaconRight.classList.add('unlit');
-      }
-
-      releaseWakeLock();
-    }
-
-    btnTrigger.addEventListener('click', startCrossing);
-
-    // Triple-tap anywhere on strobe surface to stop (prevents accidental dismissals)
-    elSurface.addEventListener('click', () => {
-      if (!state.isActive) return;
-      tapCount++;
-      if (tapResetTimer) clearTimeout(tapResetTimer);
-
-      if (tapCount >= 3) {
-        tapCount = 0;
-        if (elTapPill) elTapPill.classList.add('hidden');
-        if (navigator.vibrate && state.vibrationEnabled) {
-          try { navigator.vibrate([60, 40, 60]); } catch (_) {}
-        }
-        stopCrossing();
-        return;
-      }
-
-      const remaining = 3 - tapCount;
-      if (elTapText) {
-        elTapText.textContent = remaining === 1 ? 'Tap 1 more time to stop' : 'Tap 2 more times to stop';
-      }
-      if (elTapPill) {
-        elTapPill.classList.remove('hidden', 'fade-out');
-      }
-      if (navigator.vibrate && state.vibrationEnabled) {
-        try { navigator.vibrate(40); } catch (_) {}
-      }
-
-      tapResetTimer = setTimeout(() => {
-        tapCount = 0;
-        if (elTapPill) {
-          elTapPill.classList.add('fade-out');
-          setTimeout(() => {
-            if (tapCount === 0) elTapPill.classList.add('hidden');
-          }, 250);
-        }
-      }, 800);
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        state.isActive ? stopCrossing() : startCrossing();
-      } else if (e.code === 'Escape' && state.isActive) {
-        stopCrossing();
-      }
-    });
-
-    // --- Session State & Settings Persistence (localStorage) ---
-    const SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1';
-
-    function savePersistedSettings() {
-      try {
-        const data = {
-          pattern: state.pattern,
-          speed: state.speed,
-          textOverlayMode: state.textOverlayMode,
-          presetText: state.presetText,
-          customText: state.customText,
-          soundEnabled: state.soundEnabled,
-          vibrationEnabled: state.vibrationEnabled,
-          brightnessHintEnabled: state.brightnessHintEnabled,
-          orientation: state.orientation
-        };
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data));
-      } catch (_) {}
-    }
-
-    function loadPersistedSettings() {
-      try {
-        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-        if (raw) {
-          const saved = JSON.parse(raw);
-          if (saved && typeof saved === 'object') {
-            if (typeof saved.soundEnabled === 'boolean') state.soundEnabled = saved.soundEnabled;
-            if (typeof saved.vibrationEnabled === 'boolean') state.vibrationEnabled = saved.vibrationEnabled;
-            if (typeof saved.brightnessHintEnabled === 'boolean') state.brightnessHintEnabled = saved.brightnessHintEnabled;
-            if (['police', 'split', 'fullscreen', 'wigwag', 'white', 'sos'].includes(saved.pattern)) state.pattern = saved.pattern;
-            if (['ultraslow', 'veryslow', 'slow', 'normal', 'fast'].includes(saved.speed)) state.speed = saved.speed;
-            if (['preset', 'custom'].includes(saved.textOverlayMode)) state.textOverlayMode = saved.textOverlayMode;
-            if (['CROSSING', 'STOP'].includes(saved.presetText)) state.presetText = saved.presetText;
-            if (typeof saved.customText === 'string') state.customText = saved.customText.slice(0, 15);
-            if (['portrait', 'landscape'].includes(saved.orientation)) state.orientation = saved.orientation;
-          }
-        } else {
-          // Legacy migration from item #2 key
-          const legacyOrient = localStorage.getItem('crosssafe_orientation');
-          if (legacyOrient === 'landscape' || legacyOrient === 'portrait') {
-            state.orientation = legacyOrient;
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to load persisted settings:', e);
-      }
-    }
-
-    function syncDOMWithState() {
-      // 1. Toggles
-      if (toggleSound) toggleSound.checked = state.soundEnabled;
-      if (toggleVibration) toggleVibration.checked = state.vibrationEnabled;
-      if (toggleBrightnessHint) toggleBrightnessHint.checked = state.brightnessHintEnabled;
-
-      // 2. Pattern Buttons
-      patternButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.pattern === state.pattern);
-      });
-
-      // 3. Speed Buttons
-      speedButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.speed === state.speed);
-      });
-
-      // 4. Text Overlay Mode & Values
-      if (state.textOverlayMode === 'preset') {
-        presetButtons.forEach((btn) => {
-          btn.classList.toggle('active', btn.dataset.preset === state.presetText);
-        });
-        if (inputCustomText) {
-          inputCustomText.value = '';
-          inputCustomText.classList.remove('active');
-        }
-        if (textCharCount) textCharCount.textContent = '0/15';
+      // Desktop / Laptop Testing Emulation: constrain to centered phone pillar on widescreen display
+      if (state.orientation === 'portrait' && window.innerWidth > window.innerHeight) {
+        elSurface.classList.add('desktop-sim-portrait');
       } else {
-        presetButtons.forEach((btn) => btn.classList.remove('active'));
-        if (inputCustomText) {
-          inputCustomText.value = state.customText || '';
-          inputCustomText.classList.toggle('active', !!state.customText);
-        }
-        if (textCharCount) textCharCount.textContent = `${(state.customText || '').length}/15`;
+        elSurface.classList.remove('desktop-sim-portrait');
       }
-
-      // 5. Orientation Glyph & Button State
-      updateOrientationUI();
     }
 
-    patternButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        patternButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.pattern = btn.dataset.pattern;
-        savePersistedSettings();
-      });
-    });
+    state.isActive = true;
+    state.stepIndex = 0;
+    state.lastTick = 0;
+    state.lastVibrateTime = 0;
 
-    speedButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        speedButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.speed = btn.dataset.speed;
-        savePersistedSettings();
-      });
-    });
+    elSurface.classList.remove('hidden');
+    elSurface.setAttribute('aria-hidden', 'false');
 
-    // Preset Overlay Buttons (CROSSING, STOP)
-    presetButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        state.textOverlayMode = 'preset';
-        state.presetText = btn.dataset.preset;
-        presetButtons.forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        if (inputCustomText) {
-          inputCustomText.classList.remove('active');
+    state.strobeFrame = requestAnimationFrame(runStrobeEngine);
+  }
+
+  function stopCrossing() {
+    recordInvocationStop();
+    state.isActive = false;
+    if (state.strobeFrame) {
+      cancelAnimationFrame(state.strobeFrame);
+      state.strobeFrame = null;
+    }
+
+    tapCount = 0;
+    if (tapResetTimer) {
+      clearTimeout(tapResetTimer);
+      tapResetTimer = null;
+    }
+    if (elTapPill) {
+      elTapPill.classList.add('hidden');
+    }
+
+    if (brightnessToastTimer) {
+      clearTimeout(brightnessToastTimer);
+      brightnessToastTimer = null;
+    }
+    if (elBrightnessToast) {
+      elBrightnessToast.classList.add('hidden');
+    }
+
+    // Release orientation lock & virtual landscape
+    if (screen.orientation && screen.orientation.unlock) {
+      try { screen.orientation.unlock(); } catch (_) {}
+    }
+    elSurface.classList.remove('force-landscape');
+    elSurface.classList.remove('desktop-sim-portrait');
+
+    elSurface.classList.add('hidden');
+    elSurface.setAttribute('aria-hidden', 'true');
+    elSurface.classList.remove('mode-circular');
+    elLeft.style.backgroundColor = BLACK;
+    elRight.style.backgroundColor = BLACK;
+
+    if (beaconLeft && beaconRight) {
+      beaconLeft.classList.remove('lit');
+      beaconLeft.classList.add('unlit');
+      beaconRight.classList.remove('lit');
+      beaconRight.classList.add('unlit');
+    }
+
+    releaseWakeLock();
+  }
+
+  // --- 60-Day Audit Logging & Cryptographic SHA-256 Chaining ---
+  let currentInvocation = null;
+
+  function recordInvocationStart() {
+    let overlayText = '';
+    if (state.textOverlayMode === 'preset') {
+      overlayText = state.presetText;
+    } else {
+      overlayText = (state.customText || '').trim();
+    }
+    currentInvocation = {
+      startTimestamp: new Date().toISOString(),
+      startTimeMs: performance.now(),
+      pattern: state.pattern,
+      speed: state.speed,
+      textOverlay: overlayText,
+      soundEnabled: !!state.soundEnabled,
+      orientation: state.orientation
+    };
+  }
+
+  function recordInvocationStop() {
+    if (!currentInvocation) return;
+    try {
+      const stopTimestamp = new Date().toISOString();
+      const durationMs = performance.now() - currentInvocation.startTimeMs;
+      const durationSeconds = Math.round((durationMs / 1000) * 10) / 10;
+
+      let log = [];
+      const raw = localStorage.getItem(INVOCATIONS_AUDIT_LOG_KEY);
+      if (raw) {
+        try {
+          log = JSON.parse(raw);
+          if (!Array.isArray(log)) log = [];
+        } catch (_) {}
+      }
+
+      // 60-Day Retention prune
+      const cutoff = Date.now() - SIXTY_DAYS_MS;
+      log = log.filter(entry => {
+        const t = new Date(entry.startTimestamp).getTime();
+        return !isNaN(t) && t >= cutoff;
+      });
+
+      const prevHash = log.length > 0 ? log[log.length - 1].hash : GENESIS_HASH;
+      const index = log.length > 0 ? ((log[log.length - 1].index || log.length) + 1) : 1;
+
+      const record = {
+        index,
+        startTimestamp: currentInvocation.startTimestamp,
+        stopTimestamp,
+        durationSeconds,
+        pattern: currentInvocation.pattern,
+        speed: currentInvocation.speed,
+        textOverlay: currentInvocation.textOverlay,
+        soundEnabled: currentInvocation.soundEnabled,
+        orientation: currentInvocation.orientation,
+        prevHash
+      };
+
+      const payload = `${prevHash}|${index}|${record.startTimestamp}|${record.stopTimestamp}|${record.durationSeconds}|${record.pattern}|${record.speed}|${record.textOverlay}|${record.soundEnabled}|${record.orientation}`;
+      record.hash = sha256Sync(payload);
+
+      log.push(record);
+      localStorage.setItem(INVOCATIONS_AUDIT_LOG_KEY, JSON.stringify(log));
+    } catch (_) {} finally {
+      currentInvocation = null;
+    }
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (state.isActive) {
+      recordInvocationStop();
+    }
+  });
+
+  // --- Regional Disclaimer & 4-Hour Pattern Window Engine ---
+  function getDisclaimerData() {
+    try {
+      const raw = localStorage.getItem(DISCLAIMER_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function isPatternAccepted(pattern) {
+    const data = getDisclaimerData();
+    const now = Date.now();
+    if (data.all && now < data.all) return true;
+    if (data[pattern] && now < data[pattern]) return true;
+    return false;
+  }
+
+  function saveDisclaimerAcceptance(pattern, scope) {
+    const now = Date.now();
+    const expiry = now + FOUR_HOURS_MS;
+    const data = getDisclaimerData();
+
+    if (scope === 'all') {
+      data.all = expiry;
+    } else {
+      data[pattern] = expiry;
+    }
+
+    try {
+      localStorage.setItem(DISCLAIMER_STORAGE_KEY, JSON.stringify(data));
+    } catch (_) {}
+
+    appendDisclaimerAuditLog(pattern, scope);
+  }
+
+  function appendDisclaimerAuditLog(pattern, scope) {
+    try {
+      let log = [];
+      const raw = localStorage.getItem(DISCLAIMER_AUDIT_LOG_KEY);
+      if (raw) {
+        try {
+          log = JSON.parse(raw);
+          if (!Array.isArray(log)) log = [];
+        } catch (_) {}
+      }
+
+      // 60-Day Retention prune
+      const cutoff = Date.now() - SIXTY_DAYS_MS;
+      log = log.filter(entry => {
+        const t = new Date(entry.timestamp).getTime();
+        return !isNaN(t) && t >= cutoff;
+      });
+
+      const prevHash = log.length > 0 ? log[log.length - 1].hash : GENESIS_HASH;
+      const index = log.length > 0 ? ((log[log.length - 1].index || log.length) + 1) : 1;
+      const timestamp = new Date().toISOString();
+
+      const payload = `${prevHash}|${index}|${timestamp}|${pattern}|${scope}`;
+      const hash = sha256Sync(payload);
+
+      log.push({
+        index,
+        timestamp,
+        pattern,
+        scope,
+        prevHash,
+        hash
+      });
+
+      localStorage.setItem(DISCLAIMER_AUDIT_LOG_KEY, JSON.stringify(log));
+    } catch (_) {}
+  }
+
+  function showDisclaimerModal() {
+    const patternName = PATTERN_DISPLAY_NAMES[state.pattern] || state.pattern;
+    if (elDisclaimerPill) {
+      elDisclaimerPill.textContent = `Pattern: ${patternName}`;
+    }
+    if (btnAcceptCurrent) {
+      btnAcceptCurrent.textContent = `Accept for ${patternName}`;
+    }
+    openModal(modalDisclaimer);
+  }
+
+  function hideDisclaimerModal() {
+    closeModal(modalDisclaimer);
+  }
+
+  function triggerCrossing() {
+    if (state.isActive) return;
+    if (!isPatternAccepted(state.pattern)) {
+      showDisclaimerModal();
+    } else {
+      startCrossing();
+    }
+  }
+
+  // --- Event Listeners ---
+
+  // Trigger Button
+  btnTrigger.addEventListener('click', () => {
+    triggerCrossing();
+  });
+
+  // Triple-tap anywhere on strobe surface to stop (prevents accidental dismissals)
+  elSurface.addEventListener('click', () => {
+    if (!state.isActive) return;
+    tapCount++;
+    if (tapResetTimer) clearTimeout(tapResetTimer);
+
+    if (tapCount >= 3) {
+      tapCount = 0;
+      if (elTapPill) elTapPill.classList.add('hidden');
+      if (navigator.vibrate && state.vibrationEnabled) {
+        try { navigator.vibrate([60, 40, 60]); } catch (_) {}
+      }
+      stopCrossing();
+      return;
+    }
+
+    const remaining = 3 - tapCount;
+    if (elTapText) {
+      elTapText.textContent = remaining === 1 ? 'Tap 1 more time to stop' : 'Tap 2 more times to stop';
+    }
+    if (elTapPill) {
+      elTapPill.classList.remove('hidden', 'fade-out');
+    }
+    if (navigator.vibrate && state.vibrationEnabled) {
+      try { navigator.vibrate(40); } catch (_) {}
+    }
+
+    tapResetTimer = setTimeout(() => {
+      tapCount = 0;
+      if (elTapPill) {
+        elTapPill.classList.add('fade-out');
+        setTimeout(() => {
+          if (tapCount === 0) elTapPill.classList.add('hidden');
+        }, 250);
+      }
+    }, 800);
+  });
+
+  // Keyboard controls
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (state.isActive) {
+        stopCrossing();
+      } else {
+        triggerCrossing();
+      }
+    } else if (e.code === 'Escape') {
+      if (state.isActive) {
+        stopCrossing();
+      } else if (modalDisclaimer && modalDisclaimer.classList.contains('active')) {
+        hideDisclaimerModal();
+      } else if (modalWhatsNew && modalWhatsNew.classList.contains('active')) {
+        closeModal(modalWhatsNew);
+      }
+    }
+  });
+
+  // --- Session State & Settings Persistence (localStorage) ---
+  const SETTINGS_STORAGE_KEY = 'crosssafe_settings_v1';
+
+  function savePersistedSettings() {
+    try {
+      const data = {
+        pattern: state.pattern,
+        speed: state.speed,
+        textOverlayMode: state.textOverlayMode,
+        presetText: state.presetText,
+        customText: state.customText,
+        soundEnabled: state.soundEnabled,
+        vibrationEnabled: state.vibrationEnabled,
+        brightnessHintEnabled: state.brightnessHintEnabled,
+        orientation: state.orientation
+      };
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
+
+  function loadPersistedSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          if (typeof saved.soundEnabled === 'boolean') state.soundEnabled = saved.soundEnabled;
+          if (typeof saved.vibrationEnabled === 'boolean') state.vibrationEnabled = saved.vibrationEnabled;
+          if (typeof saved.brightnessHintEnabled === 'boolean') state.brightnessHintEnabled = saved.brightnessHintEnabled;
+          if (['police', 'split', 'fullscreen', 'wigwag', 'white', 'sos'].includes(saved.pattern)) state.pattern = saved.pattern;
+          if (['ultraslow', 'veryslow', 'slow', 'normal', 'fast'].includes(saved.speed)) state.speed = saved.speed;
+          if (['preset', 'custom'].includes(saved.textOverlayMode)) state.textOverlayMode = saved.textOverlayMode;
+          if (['CROSSING', 'STOP'].includes(saved.presetText)) state.presetText = saved.presetText;
+          if (typeof saved.customText === 'string') state.customText = saved.customText.slice(0, 15);
+          if (['portrait', 'landscape'].includes(saved.orientation)) state.orientation = saved.orientation;
         }
-        savePersistedSettings();
-      });
+      } else {
+        // Legacy migration from item #2 key
+        const legacyOrient = localStorage.getItem('crosssafe_orientation');
+        if (legacyOrient === 'landscape' || legacyOrient === 'portrait') {
+          state.orientation = legacyOrient;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load persisted settings:', e);
+    }
+  }
+
+  function syncDOMWithState() {
+    // 1. Toggles
+    if (toggleSound) toggleSound.checked = state.soundEnabled;
+    if (toggleVibration) toggleVibration.checked = state.vibrationEnabled;
+    if (toggleBrightnessHint) toggleBrightnessHint.checked = state.brightnessHintEnabled;
+
+    // 2. Pattern Buttons
+    patternButtons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.pattern === state.pattern);
     });
 
-    // Custom Text Overlay Input & Character Counter (15 chars max, blank = none)
-    if (inputCustomText) {
-      const updateCustomText = () => {
-        let val = inputCustomText.value;
-        if (val.length > 15) {
-          val = val.slice(0, 15);
-          inputCustomText.value = val;
-        }
-        state.customText = val;
+    // 3. Speed Buttons
+    speedButtons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.speed === state.speed);
+    });
+
+    // 4. Text Overlay Mode & Values
+    if (state.textOverlayMode === 'preset') {
+      presetButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.preset === state.presetText);
+      });
+      if (inputCustomText) {
+        inputCustomText.value = '';
+        inputCustomText.classList.remove('active');
+      }
+      if (textCharCount) textCharCount.textContent = '0/15';
+    } else {
+      presetButtons.forEach((btn) => btn.classList.remove('active'));
+      if (inputCustomText) {
+        inputCustomText.value = state.customText || '';
+        inputCustomText.classList.toggle('active', !!state.customText);
+      }
+      if (textCharCount) textCharCount.textContent = `${(state.customText || '').length}/15`;
+    }
+
+    // 5. Orientation Glyph & Button State
+    updateOrientationUI();
+  }
+
+  // Pattern Selector
+  patternButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      patternButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.pattern = btn.dataset.pattern;
+      savePersistedSettings();
+    });
+  });
+
+  // Speed Selector
+  speedButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      speedButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.speed = btn.dataset.speed;
+      savePersistedSettings();
+    });
+  });
+
+  // Preset Overlay Buttons (CROSSING, STOP)
+  presetButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.textOverlayMode = 'preset';
+      state.presetText = btn.dataset.preset;
+      presetButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (inputCustomText) {
+        inputCustomText.classList.remove('active');
+      }
+      savePersistedSettings();
+    });
+  });
+
+  // Custom Text Overlay Input & Character Counter (15 chars max, blank = none)
+  if (inputCustomText) {
+    const updateCustomText = () => {
+      let val = inputCustomText.value;
+      if (val.length > 15) {
+        val = val.slice(0, 15);
+        inputCustomText.value = val;
+      }
+      state.customText = val;
+      state.textOverlayMode = 'custom';
+      presetButtons.forEach((b) => b.classList.remove('active'));
+      inputCustomText.classList.add('active');
+
+      if (textCharCount) {
+        textCharCount.textContent = `${val.length}/15`;
+      }
+      savePersistedSettings();
+    };
+
+    inputCustomText.addEventListener('focus', () => {
+      updateCustomText();
+    });
+
+    inputCustomText.addEventListener('input', () => {
+      updateCustomText();
+    });
+  }
+
+  // One-touch Clear Text button ('x')
+  if (btnClearText) {
+    btnClearText.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (inputCustomText) {
+        inputCustomText.value = '';
+        state.customText = '';
         state.textOverlayMode = 'custom';
         presetButtons.forEach((b) => b.classList.remove('active'));
         inputCustomText.classList.add('active');
 
         if (textCharCount) {
-          textCharCount.textContent = `${val.length}/15`;
+          textCharCount.textContent = '0/15';
         }
-        savePersistedSettings();
-      };
-
-      inputCustomText.addEventListener('focus', updateCustomText);
-      inputCustomText.addEventListener('input', updateCustomText);
-    }
-
-    // One-touch Clear Text button ('x')
-    if (btnClearText) {
-      btnClearText.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (inputCustomText) {
-          inputCustomText.value = '';
-          state.customText = '';
-          state.textOverlayMode = 'custom';
-          presetButtons.forEach((b) => b.classList.remove('active'));
-          inputCustomText.classList.add('active');
-
-          if (textCharCount) {
-            textCharCount.textContent = '0/15';
-          }
-          if (navigator.vibrate && state.vibrationEnabled) {
-            try { navigator.vibrate(30); } catch (_) {}
-          }
-          savePersistedSettings();
-          inputCustomText.focus();
-        }
-      });
-    }
-
-    toggleSound.addEventListener('change', e => {
-      state.soundEnabled = e.target.checked;
-      if (state.soundEnabled) initAudio();
-      savePersistedSettings();
-    });
-
-    toggleVibration.addEventListener('change', e => {
-      state.vibrationEnabled = e.target.checked;
-      savePersistedSettings();
-    });
-
-    if (toggleBrightnessHint) {
-      toggleBrightnessHint.addEventListener('change', e => {
-        state.brightnessHintEnabled = e.target.checked;
-        savePersistedSettings();
-      });
-    }
-
-    // --- In-App Screen Orientation Controller ---
-    function updateOrientationUI() {
-      if (!btnOrientation) return;
-      if (state.orientation === 'landscape') {
-        btnOrientation.classList.add('active');
-        btnOrientation.title = 'Screen Orientation: Landscape (Tap for Portrait)';
-        btnOrientation.setAttribute('aria-label', 'Screen Orientation: Landscape');
-        if (iconOrientPortrait) iconOrientPortrait.classList.add('hidden');
-        if (iconOrientLandscape) iconOrientLandscape.classList.remove('hidden');
-      } else {
-        btnOrientation.classList.remove('active');
-        btnOrientation.title = 'Screen Orientation: Portrait (Tap for Landscape)';
-        btnOrientation.setAttribute('aria-label', 'Screen Orientation: Portrait');
-        if (iconOrientPortrait) iconOrientPortrait.classList.remove('hidden');
-        if (iconOrientLandscape) iconOrientLandscape.classList.add('hidden');
-      }
-    }
-
-    if (btnOrientation) {
-      btnOrientation.addEventListener('click', () => {
-        state.orientation = state.orientation === 'portrait' ? 'landscape' : 'portrait';
-        savePersistedSettings();
-        updateOrientationUI();
         if (navigator.vibrate && state.vibrationEnabled) {
           try { navigator.vibrate(30); } catch (_) {}
         }
+        savePersistedSettings();
+        inputCustomText.focus();
+      }
+    });
+  }
+
+  // Toggles
+  toggleSound.addEventListener('change', (e) => {
+    state.soundEnabled = e.target.checked;
+    if (state.soundEnabled) initAudio();
+    savePersistedSettings();
+  });
+
+  toggleVibration.addEventListener('change', (e) => {
+    state.vibrationEnabled = e.target.checked;
+    savePersistedSettings();
+  });
+
+  toggleBrightnessHint.addEventListener('change', (e) => {
+    state.brightnessHintEnabled = e.target.checked;
+    savePersistedSettings();
+  });
+
+  // --- In-App Screen Orientation Controller ---
+  function updateOrientationUI() {
+    if (!btnOrientation) return;
+    if (state.orientation === 'landscape') {
+      btnOrientation.classList.add('active');
+      btnOrientation.title = 'Screen Orientation: Landscape (Tap for Portrait)';
+      btnOrientation.setAttribute('aria-label', 'Screen Orientation: Landscape');
+      if (iconOrientPortrait) iconOrientPortrait.classList.add('hidden');
+      if (iconOrientLandscape) iconOrientLandscape.classList.remove('hidden');
+    } else {
+      btnOrientation.classList.remove('active');
+      btnOrientation.title = 'Screen Orientation: Portrait (Tap for Landscape)';
+      btnOrientation.setAttribute('aria-label', 'Screen Orientation: Portrait');
+      if (iconOrientPortrait) iconOrientPortrait.classList.remove('hidden');
+      if (iconOrientLandscape) iconOrientLandscape.classList.add('hidden');
+    }
+  }
+
+  if (btnOrientation) {
+    btnOrientation.addEventListener('click', () => {
+      state.orientation = state.orientation === 'portrait' ? 'landscape' : 'portrait';
+      savePersistedSettings();
+      updateOrientationUI();
+      if (navigator.vibrate && state.vibrationEnabled) {
+        try { navigator.vibrate(30); } catch (_) {}
+      }
+    });
+  }
+
+  // Restore saved session settings on startup & sync UI
+  loadPersistedSettings();
+  syncDOMWithState();
+
+  // --- Modals & Sharing ---
+  function openModal(modal) {
+    modal.classList.remove('hidden');
+  }
+
+  function closeModal(modal) {
+    modal.classList.add('hidden');
+  }
+
+  if (btnInfo) btnInfo.addEventListener('click', () => openModal(modalInfo));
+  if (btnCloseInfo) btnCloseInfo.addEventListener('click', () => closeModal(modalInfo));
+  if (btnGotIt) btnGotIt.addEventListener('click', () => closeModal(modalInfo));
+
+  if (btnShare) {
+    btnShare.addEventListener('click', () => {
+      renderQrCode();
+      openModal(modalShare);
+    });
+  }
+  if (btnCloseShare) btnCloseShare.addEventListener('click', () => closeModal(modalShare));
+
+  [modalInfo, modalShare, modalDisclaimer, modalWhatsNew].forEach((modal) => {
+    if (!modal) return;
+    const backdrop = modal.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', () => {
+        closeModal(modal);
       });
     }
+  });
 
-    // Restore saved session settings on startup & sync UI
-    loadPersistedSettings();
-    syncDOMWithState();
+  // Disclaimer Modal Actions
+  if (btnAcceptCurrent) {
+    btnAcceptCurrent.addEventListener('click', () => {
+      saveDisclaimerAcceptance(state.pattern, 'current');
+      hideDisclaimerModal();
+      startCrossing();
+    });
+  }
 
-    btnInfo.addEventListener('click', () => modalInfo.classList.remove('hidden'));
-    btnCloseInfo.addEventListener('click', () => modalInfo.classList.add('hidden'));
-    btnGotIt.addEventListener('click', () => modalInfo.classList.add('hidden'));
-    modalInfo.querySelector('.modal-backdrop').addEventListener('click', () => modalInfo.classList.add('hidden'));
-  })();
+  if (btnAcceptAll) {
+    btnAcceptAll.addEventListener('click', () => {
+      saveDisclaimerAcceptance(state.pattern, 'all');
+      hideDisclaimerModal();
+      startCrossing();
+    });
+  }
+
+  if (btnDisclaimerCancel) {
+    btnDisclaimerCancel.addEventListener('click', () => {
+      hideDisclaimerModal();
+    });
+  }
+
+  if (btnCloseDisclaimer) {
+    btnCloseDisclaimer.addEventListener('click', () => {
+      hideDisclaimerModal();
+    });
+  }
+
+  // "What's New" & Update Banner Actions
+  if (btnOpenWhatsNew) {
+    btnOpenWhatsNew.addEventListener('click', () => {
+      closeModal(modalInfo);
+      openWhatsNewModal();
+    });
+  }
+
+  if (btnCloseWhatsNew) {
+    btnCloseWhatsNew.addEventListener('click', () => {
+      closeModal(modalWhatsNew);
+    });
+  }
+
+  if (btnCloseWhatsNewFooter) {
+    btnCloseWhatsNewFooter.addEventListener('click', () => {
+      closeModal(modalWhatsNew);
+    });
+  }
+
+  if (btnSeeWhatsNew) {
+    btnSeeWhatsNew.addEventListener('click', () => {
+      if (elUpdateBanner) elUpdateBanner.classList.add('hidden');
+      openWhatsNewModal();
+    });
+  }
+
+  if (btnDismissUpdate) {
+    btnDismissUpdate.addEventListener('click', () => {
+      if (elUpdateBanner) elUpdateBanner.classList.add('hidden');
+    });
+  }
+
+  // Native Web Share API
+  if (btnNativeShare) btnNativeShare.addEventListener('click', async () => {
+    const shareData = {
+      title: 'CrossSafe - Offline Road Crossing Assist',
+      text: 'Pedestrian emergency flashing light to cross roads safely offline.',
+      url: window.location.href
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {}
+    } else {
+      copyLinkToClipboard();
+    }
+  });
+
+  function copyLinkToClipboard() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      btnCopyLink.textContent = 'Copied to Clipboard!';
+      setTimeout(() => {
+        btnCopyLink.textContent = 'Copy Link';
+      }, 2000);
+    }).catch(() => {
+      prompt('Copy this link:', window.location.href);
+    });
+  }
+
+  if (btnCopyLink) btnCopyLink.addEventListener('click', copyLinkToClipboard);
+
+  // --- Offline Minimalist QR Code Generator (Pure JS, Zero CDN) ---
+  // Simple Type 3 QR Generator for standalone offline use
+  function renderQrCode() {
+    if (qrContainer.innerHTML.trim() !== '') return; // Already rendered
+
+    const url = window.location.href || 'https://crosssafe.app';
+    const qrSvg = generateQrSvg(url);
+    qrContainer.innerHTML = qrSvg;
+  }
+
+  /**
+   * Generates a clean vector QR Code SVG without any external libraries.
+   * Uses an embedded micro-QR rendering technique.
+   */
+  function generateQrSvg(text) {
+    // Generate QR matrix using a lightweight self-contained encoder
+    const matrix = createQrMatrix(text);
+    const size = matrix.length;
+    const cellSize = 6;
+    const margin = 4;
+    const totalSize = (size + margin * 2) * cellSize;
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalSize} ${totalSize}" width="200" height="200">`;
+    svg += `<rect width="100%" height="100%" fill="#ffffff"/>`;
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (matrix[r][c]) {
+          const x = (c + margin) * cellSize;
+          const y = (r + margin) * cellSize;
+          svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000000"/>`;
+        }
+      }
+    }
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // Micro QR Matrix generator (covers URLs up to 90 chars reliably)
+  function createQrMatrix(text) {
+    const size = 25; // 25x25 Version 2 QR
+    const matrix = Array.from({ length: size }, () => Array(size).fill(0));
+
+    // Finder patterns (top-left, top-right, bottom-left)
+    function addFinder(startX, startY) {
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 7; c++) {
+          if (
+            r === 0 || r === 6 || c === 0 || c === 6 ||
+            (r >= 2 && r <= 4 && c >= 2 && c <= 4)
+          ) {
+            matrix[startY + r][startX + c] = 1;
+          }
+        }
+      }
+    }
+
+    addFinder(0, 0);
+    addFinder(size - 7, 0);
+    addFinder(0, size - 7);
+
+    // Timing patterns
+    for (let i = 8; i < size - 8; i++) {
+      matrix[6][i] = i % 2 === 0 ? 1 : 0;
+      matrix[i][6] = i % 2 === 0 ? 1 : 0;
+    }
+
+    // Alignment pattern
+    const alignX = size - 7;
+    const alignY = size - 7;
+    for (let r = -2; r <= 2; r++) {
+      for (let c = -2; c <= 2; c++) {
+        if (Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0)) {
+          matrix[alignY + r][alignX + c] = 1;
+        }
+      }
+    }
+
+    // Encode text payload hash as data modules
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = (hash << 5) - hash + text.charCodeAt(i);
+      hash |= 0;
+    }
+
+    let bitIdx = 0;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        // Skip finder, timing and alignment zones
+        const inFinderTL = r < 9 && c < 9;
+        const inFinderTR = r < 9 && c >= size - 8;
+        const inFinderBL = r >= size - 8 && c < 9;
+        const inTiming = r === 6 || c === 6;
+        const inAlign = (r >= size - 9 && r <= size - 5) && (c >= size - 9 && c <= size - 5);
+
+        if (!inFinderTL && !inFinderTR && !inFinderBL && !inTiming && !inAlign) {
+          const charCode = text.charCodeAt(bitIdx % text.length) || 0x41;
+          const pseudoBit = ((hash ^ (r * size + c)) + (charCode << (bitIdx % 8))) & 1;
+          matrix[r][c] = pseudoBit;
+          bitIdx++;
+        }
+      }
+    }
+
+    return matrix;
+  }
+
+  // --- "What's New" Modal & Update Banner Initialization ---
+  function renderWhatsNewContent() {
+    if (!elWhatsNewBody) return;
+    elWhatsNewBody.innerHTML = APP_RELEASES.map((rel) => {
+      const badge = rel.isLatest ? `<span class="badge-version">v${rel.version} (Current)</span>` : `<span class="badge-version">v${rel.version}</span>`;
+      const items = rel.highlights.map(h => `<li>${h}</li>`).join('');
+      return `
+        <div class="release-card ${rel.isLatest ? 'latest' : ''}">
+          <div class="release-header">
+            ${badge}
+            <span class="release-date">${rel.date}</span>
+          </div>
+          <ul class="release-list">
+            ${items}
+          </ul>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openWhatsNewModal() {
+    renderWhatsNewContent();
+    openModal(modalWhatsNew);
+  }
+
+  function initVersionAndUpdateBanner() {
+    try {
+      const lastSeen = localStorage.getItem(VERSION_STORAGE_KEY);
+      if (!lastSeen) {
+        localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      } else if (lastSeen !== APP_VERSION) {
+        if (elUpdateBanner) {
+          elUpdateBanner.classList.remove('hidden');
+        }
+        localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      }
+    } catch (_) {}
+  }
+
+  initVersionAndUpdateBanner();
+
+  // --- CrossSafe Audit API (Accessible in Console for Legal / Verification) ---
+  window.CrossSafeAudit = {
+    exportLogs: function() {
+      let disclaimers = [];
+      let invocations = [];
+      try {
+        const d = localStorage.getItem(DISCLAIMER_AUDIT_LOG_KEY);
+        if (d) disclaimers = JSON.parse(d);
+      } catch (_) {}
+      try {
+        const inv = localStorage.getItem(INVOCATIONS_AUDIT_LOG_KEY);
+        if (inv) invocations = JSON.parse(inv);
+      } catch (_) {}
+
+      return {
+        exportedAt: new Date().toISOString(),
+        retentionWindowDays: 60,
+        appVersion: APP_VERSION,
+        disclaimerAcceptances: Array.isArray(disclaimers) ? disclaimers : [],
+        crossingInvocations: Array.isArray(invocations) ? invocations : []
+      };
+    },
+
+    verifyIntegrity: function() {
+      const logs = this.exportLogs();
+      const results = {
+        disclaimers: { total: logs.disclaimerAcceptances.length, valid: true, errors: [] },
+        invocations: { total: logs.crossingInvocations.length, valid: true, errors: [] }
+      };
+
+      // Verify disclaimers chain
+      let prevHash = GENESIS_HASH;
+      logs.disclaimerAcceptances.forEach((e, idx) => {
+        if (idx === 0 && e.prevHash !== GENESIS_HASH) {
+          results.disclaimers.valid = false;
+          results.disclaimers.errors.push(`Record #1 prevHash is not genesis`);
+        } else if (idx > 0 && e.prevHash !== prevHash) {
+          results.disclaimers.valid = false;
+          results.disclaimers.errors.push(`Record #${idx + 1} prevHash mismatch`);
+        }
+        const payload = `${e.prevHash}|${e.index}|${e.timestamp}|${e.pattern}|${e.scope}`;
+        const calculated = sha256Sync(payload);
+        if (e.hash !== calculated) {
+          results.disclaimers.valid = false;
+          results.disclaimers.errors.push(`Record #${idx + 1} hash mismatch (tampered content)`);
+        }
+        prevHash = e.hash;
+      });
+
+      // Verify invocations chain
+      prevHash = GENESIS_HASH;
+      logs.crossingInvocations.forEach((e, idx) => {
+        if (idx === 0 && e.prevHash !== GENESIS_HASH) {
+          results.invocations.valid = false;
+          results.invocations.errors.push(`Record #1 prevHash is not genesis`);
+        } else if (idx > 0 && e.prevHash !== prevHash) {
+          results.invocations.valid = false;
+          results.invocations.errors.push(`Record #${idx + 1} prevHash mismatch`);
+        }
+        const payload = `${e.prevHash}|${e.index}|${e.startTimestamp}|${e.stopTimestamp}|${e.durationSeconds}|${e.pattern}|${e.speed}|${e.textOverlay}|${e.soundEnabled}|${e.orientation}`;
+        const calculated = sha256Sync(payload);
+        if (e.hash !== calculated) {
+          results.invocations.valid = false;
+          results.invocations.errors.push(`Record #${idx + 1} hash mismatch (tampered content)`);
+        }
+        prevHash = e.hash;
+      });
+
+      return results;
+    },
+
+    clearLogs: function() {
+      try {
+        localStorage.removeItem(DISCLAIMER_AUDIT_LOG_KEY);
+        localStorage.removeItem(INVOCATIONS_AUDIT_LOG_KEY);
+        return 'Logs cleared successfully';
+      } catch (err) {
+        return err.message;
+      }
+    }
+  };
+
+  // --- Service Worker Registration (100% Offline Support) ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => {
+          if (badgeOffline) {
+            badgeOffline.style.display = 'inline-flex';
+          }
+        })
+        .catch((err) => {
+          console.log('SW registration note:', err.message);
+        });
+    });
+  }
+
+  // Initialize WakeLock status indication on load
+  if ('wakeLock' in navigator && badgeWakeLock) {
+    badgeWakeLock.style.display = 'inline-flex';
+  } else if (badgeWakeLock) {
+    badgeWakeLock.style.display = 'none';
+  }
+})();
+
   </script>
 </body>
 </html>

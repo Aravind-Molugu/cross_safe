@@ -1212,12 +1212,22 @@ body {
 .btn-secondary {
   background: var(--bg-dark);
   color: var(--text-main);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   font-weight: 600;
   padding: 10px 18px;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.88rem;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
 }
 
 .qr-container {
@@ -1245,6 +1255,313 @@ body {
 
 .text-center {
   text-align: center;
+}
+
+/* ==========================================================================
+   Update Notification Banner (Item #11)
+   ========================================================================== */
+.update-banner {
+  background: linear-gradient(135deg, rgba(13, 27, 42, 0.96) 0%, rgba(20, 32, 54, 0.96) 100%);
+  border: 1px solid rgba(0, 210, 255, 0.45);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 18px rgba(0, 210, 255, 0.15);
+  animation: bannerSlideDown 0.3s ease-out;
+  overflow: hidden;
+}
+
+.update-banner.hidden {
+  display: none !important;
+}
+
+@keyframes bannerSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.update-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.update-banner-text {
+  font-size: 0.82rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.btn-banner-action {
+  background: var(--accent-cyan);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0, 210, 255, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-banner-action:hover {
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.4);
+}
+
+.btn-banner-action:active {
+  transform: scale(0.96);
+}
+
+.btn-banner-dismiss {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-banner-dismiss:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.btn-banner-dismiss:active {
+  transform: scale(0.95);
+}
+
+/* ==========================================================================
+   Regional Disclaimer Modal (Item #10)
+   ========================================================================== */
+.disclaimer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.disclaimer-notice-box {
+  background: rgba(255, 170, 0, 0.08);
+  border-left: 3px solid var(--strobe-amber);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #ffda85;
+}
+
+.disclaimer-pattern-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.disclaimer-text {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+.disclaimer-validity-note {
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px dashed rgba(0, 210, 255, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.disclaimer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-accept-current {
+  background: var(--accent-cyan);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  padding: 13px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.25);
+}
+
+.btn-accept-current:hover {
+  box-shadow: 0 6px 18px rgba(0, 210, 255, 0.4);
+}
+
+.btn-accept-current:active {
+  transform: scale(0.97);
+}
+
+.btn-accept-all {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  border: 1.5px solid var(--border-color);
+  font-weight: 600;
+  padding: 11px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.btn-accept-all:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
+}
+
+.btn-accept-all:active {
+  transform: scale(0.98);
+}
+
+.btn-disclaimer-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-weight: 600;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-align: center;
+  transition: color 0.15s ease;
+}
+
+.btn-disclaimer-cancel:hover {
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   "What's New" Release Notes Modal (Item #11)
+   ========================================================================== */
+.whats-new-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.release-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.release-card.latest {
+  background: rgba(0, 210, 255, 0.04);
+  border: 1.5px solid rgba(0, 210, 255, 0.35);
+  box-shadow: 0 0 16px rgba(0, 210, 255, 0.08);
+}
+
+.release-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.release-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-version {
+  background: var(--accent-cyan);
+  color: #000;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.release-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.release-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.release-highlights li {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  padding-left: 20px;
+  position: relative;
+}
+
+.release-highlights li strong {
+  color: var(--text-main);
+}
+
+.release-highlights li::before {
+  content: "•";
+  position: absolute;
+  left: 6px;
+  color: var(--accent-cyan);
+  font-weight: bold;
+}
+
+.release-archival-footer {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.release-archival-footer a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.release-archival-footer a:hover {
+  text-decoration: underline;
 }
 
 @media (prefers-reduced-motion: reduce) {

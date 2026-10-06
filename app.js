@@ -6,6 +6,121 @@
 (() => {
   'use strict';
 
+  const APP_VERSION = '1.9.0';
+  const VERSION_STORAGE_KEY = 'crosssafe_last_seen_version';
+  const DISCLAIMER_STORAGE_KEY = 'crosssafe_disclaimer_v1';
+  const DISCLAIMER_AUDIT_LOG_KEY = 'crosssafe_disclaimer_audit_log';
+  const INVOCATIONS_AUDIT_LOG_KEY = 'crosssafe_invocations_audit_log';
+  const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+  const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+  const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+
+  const PATTERN_DISPLAY_NAMES = {
+    police: 'Police Strobe',
+    split: 'Split Alternating',
+    fullscreen: 'Full Screen Flip',
+    wigwag: 'Dual Amber Wig-Wag',
+    white: 'White Beacon',
+    sos: 'SOS Morse'
+  };
+
+  const APP_RELEASES = [
+    {
+      version: '1.9.0',
+      date: 'October 2026',
+      isLatest: true,
+      highlights: [
+        '<strong>Regional Flashing Light Notice</strong>: Added a 4-hour safety disclaimer dialog before activating emergency strobes, ensuring local regulatory compliance.',
+        '<strong>60-Day Tamper-Evident Audit Logging</strong>: Automatically records crossing duration, speed, pattern, and disclaimer acceptances using offline SHA-256 hash chaining.',
+        '<strong>In-App Update Alerts</strong>: Subtle, dismissible notification banner alerting returning users to new features without interrupting road crossings.',
+        '<strong>Version History & Release Notes</strong>: Accessible dialog to browse new features anytime via the Info & Help modal.'
+      ]
+    },
+    {
+      version: '1.8.0',
+      date: 'September 2026',
+      isLatest: false,
+      highlights: [
+        '<strong>Desktop & Laptop Testing Emulation</strong>: Portrait mode now renders inside a centered phone pillar preview with dark letterboxed side gutters.',
+        '<strong>Zero Mobile Regressions</strong>: Physical phones continue using native hardware orientation locks.'
+      ]
+    },
+    {
+      version: '1.7.0',
+      date: 'September 2026',
+      isLatest: false,
+      highlights: [
+        '<strong>Settings Persistence</strong>: Automatically saves light pattern, speed, custom text, audio, vibration, and orientation choices across browser sessions.',
+        '<strong>Animated Micro-Strobes</strong>: Added live animated previews for Dual Amber Wig-Wag and White Beacon tiles.',
+        '<strong>Zero OS Pop-Ups</strong>: Eliminated Android full-screen exit prompts for a clean, distraction-free crossing screen.'
+      ]
+    }
+  ];
+
+  // Pure JavaScript synchronous SHA-256 (100% offline & zero dependencies)
+  function sha256Sync(ascii) {
+    function rightRotate(value, amount) {
+      return (value >>> amount) | (value << (32 - amount));
+    }
+    const mathPow = Math.pow;
+    const maxWord = mathPow(2, 32);
+    let result = '';
+    const words = [];
+    const asciiBitLength = ascii.length * 8;
+    let hash = [
+      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+      0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    ];
+    const k = [
+      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ];
+    let i, j;
+    ascii += '\x80';
+    while ((ascii.length % 64) !== 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i);
+      words[i >> 2] |= j << ((3 - (i % 4)) * 8);
+    }
+    words[words.length] = ((asciiBitLength / maxWord) | 0);
+    words[words.length] = (asciiBitLength & 0xffffffff);
+    for (j = 0; j < words.length;) {
+      const w = words.slice(j, j += 16);
+      const oldHash = hash.slice(0);
+      for (i = 0; i < 64; i++) {
+        const w15 = w[i - 15], w2 = w[i - 2];
+        const a = hash[0], e = hash[4];
+        const s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+        const ch = (e & hash[5]) ^ ((~e) & hash[6]);
+        const temp1 = (hash[7] + s1 + ch + k[i] + (w[i] = (i < 16) ? w[i] : (
+          w[i - 16] +
+          (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+          w[i - 7] +
+          (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+        ) | 0)) | 0;
+        const s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+        const maj = (a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]);
+        const temp2 = (s0 + maj) | 0;
+        hash = [(temp1 + temp2) | 0, a, hash[1], hash[2], (hash[3] + temp1) | 0, hash[4], hash[5], hash[6]];
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j >= 0; j--) {
+        const b = (hash[i] >> (8 * j)) & 255;
+        result += ((b < 16) ? '0' : '') + b.toString(16);
+      }
+    }
+    return result;
+  }
+
+
   // --- State Configuration ---
   const state = {
     isActive: false,
@@ -182,6 +297,27 @@
   const btnCopyLink = document.getElementById('btn-copy-link');
   const qrContainer = document.getElementById('qr-container');
 
+  // Update Notification Banner (Item #11)
+  const elUpdateBanner = document.getElementById('update-banner');
+  const btnSeeWhatsNew = document.getElementById('btn-see-whats-new');
+  const btnDismissUpdate = document.getElementById('btn-dismiss-update');
+
+  // Regional Disclaimer Modal (Item #10)
+  const modalDisclaimer = document.getElementById('modal-disclaimer');
+  const btnCloseDisclaimer = document.getElementById('btn-close-disclaimer');
+  const btnAcceptCurrent = document.getElementById('btn-accept-current');
+  const btnAcceptAll = document.getElementById('btn-accept-all');
+  const btnDisclaimerCancel = document.getElementById('btn-disclaimer-cancel');
+  const elDisclaimerPill = document.getElementById('disclaimer-pattern-pill');
+
+  // "What's New" Release Notes Modal (Item #11)
+  const modalWhatsNew = document.getElementById('modal-whats-new');
+  const btnCloseWhatsNew = document.getElementById('btn-close-whats-new');
+  const btnCloseWhatsNewFooter = document.getElementById('btn-close-whats-new-footer');
+  const btnOpenWhatsNew = document.getElementById('btn-open-whats-new');
+  const elWhatsNewBody = document.getElementById('whats-new-body');
+
+
   // --- Audio Synthesizer (Web Audio API) ---
   function initAudio() {
     if (!state.audioCtx) {
@@ -348,6 +484,7 @@
   }
 
   function startCrossing() {
+    recordInvocationStart();
     initAudio();
     requestWakeLock();
 
@@ -427,6 +564,7 @@
   }
 
   function stopCrossing() {
+    recordInvocationStop();
     state.isActive = false;
     if (state.strobeFrame) {
       cancelAnimationFrame(state.strobeFrame);
@@ -473,11 +611,185 @@
     releaseWakeLock();
   }
 
+  // --- 60-Day Audit Logging & Cryptographic SHA-256 Chaining ---
+  let currentInvocation = null;
+
+  function recordInvocationStart() {
+    let overlayText = '';
+    if (state.textOverlayMode === 'preset') {
+      overlayText = state.presetText;
+    } else {
+      overlayText = (state.customText || '').trim();
+    }
+    currentInvocation = {
+      startTimestamp: new Date().toISOString(),
+      startTimeMs: performance.now(),
+      pattern: state.pattern,
+      speed: state.speed,
+      textOverlay: overlayText,
+      soundEnabled: !!state.soundEnabled,
+      orientation: state.orientation
+    };
+  }
+
+  function recordInvocationStop() {
+    if (!currentInvocation) return;
+    try {
+      const stopTimestamp = new Date().toISOString();
+      const durationMs = performance.now() - currentInvocation.startTimeMs;
+      const durationSeconds = Math.round((durationMs / 1000) * 10) / 10;
+
+      let log = [];
+      const raw = localStorage.getItem(INVOCATIONS_AUDIT_LOG_KEY);
+      if (raw) {
+        try {
+          log = JSON.parse(raw);
+          if (!Array.isArray(log)) log = [];
+        } catch (_) {}
+      }
+
+      // 60-Day Retention prune
+      const cutoff = Date.now() - SIXTY_DAYS_MS;
+      log = log.filter(entry => {
+        const t = new Date(entry.startTimestamp).getTime();
+        return !isNaN(t) && t >= cutoff;
+      });
+
+      const prevHash = log.length > 0 ? log[log.length - 1].hash : GENESIS_HASH;
+      const index = log.length > 0 ? ((log[log.length - 1].index || log.length) + 1) : 1;
+
+      const record = {
+        index,
+        startTimestamp: currentInvocation.startTimestamp,
+        stopTimestamp,
+        durationSeconds,
+        pattern: currentInvocation.pattern,
+        speed: currentInvocation.speed,
+        textOverlay: currentInvocation.textOverlay,
+        soundEnabled: currentInvocation.soundEnabled,
+        orientation: currentInvocation.orientation,
+        prevHash
+      };
+
+      const payload = `${prevHash}|${index}|${record.startTimestamp}|${record.stopTimestamp}|${record.durationSeconds}|${record.pattern}|${record.speed}|${record.textOverlay}|${record.soundEnabled}|${record.orientation}`;
+      record.hash = sha256Sync(payload);
+
+      log.push(record);
+      localStorage.setItem(INVOCATIONS_AUDIT_LOG_KEY, JSON.stringify(log));
+    } catch (_) {} finally {
+      currentInvocation = null;
+    }
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (state.isActive) {
+      recordInvocationStop();
+    }
+  });
+
+  // --- Regional Disclaimer & 4-Hour Pattern Window Engine ---
+  function getDisclaimerData() {
+    try {
+      const raw = localStorage.getItem(DISCLAIMER_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function isPatternAccepted(pattern) {
+    const data = getDisclaimerData();
+    const now = Date.now();
+    if (data.all && now < data.all) return true;
+    if (data[pattern] && now < data[pattern]) return true;
+    return false;
+  }
+
+  function saveDisclaimerAcceptance(pattern, scope) {
+    const now = Date.now();
+    const expiry = now + FOUR_HOURS_MS;
+    const data = getDisclaimerData();
+
+    if (scope === 'all') {
+      data.all = expiry;
+    } else {
+      data[pattern] = expiry;
+    }
+
+    try {
+      localStorage.setItem(DISCLAIMER_STORAGE_KEY, JSON.stringify(data));
+    } catch (_) {}
+
+    appendDisclaimerAuditLog(pattern, scope);
+  }
+
+  function appendDisclaimerAuditLog(pattern, scope) {
+    try {
+      let log = [];
+      const raw = localStorage.getItem(DISCLAIMER_AUDIT_LOG_KEY);
+      if (raw) {
+        try {
+          log = JSON.parse(raw);
+          if (!Array.isArray(log)) log = [];
+        } catch (_) {}
+      }
+
+      // 60-Day Retention prune
+      const cutoff = Date.now() - SIXTY_DAYS_MS;
+      log = log.filter(entry => {
+        const t = new Date(entry.timestamp).getTime();
+        return !isNaN(t) && t >= cutoff;
+      });
+
+      const prevHash = log.length > 0 ? log[log.length - 1].hash : GENESIS_HASH;
+      const index = log.length > 0 ? ((log[log.length - 1].index || log.length) + 1) : 1;
+      const timestamp = new Date().toISOString();
+
+      const payload = `${prevHash}|${index}|${timestamp}|${pattern}|${scope}`;
+      const hash = sha256Sync(payload);
+
+      log.push({
+        index,
+        timestamp,
+        pattern,
+        scope,
+        prevHash,
+        hash
+      });
+
+      localStorage.setItem(DISCLAIMER_AUDIT_LOG_KEY, JSON.stringify(log));
+    } catch (_) {}
+  }
+
+  function showDisclaimerModal() {
+    const patternName = PATTERN_DISPLAY_NAMES[state.pattern] || state.pattern;
+    if (elDisclaimerPill) {
+      elDisclaimerPill.textContent = `Pattern: ${patternName}`;
+    }
+    if (btnAcceptCurrent) {
+      btnAcceptCurrent.textContent = `Accept for ${patternName}`;
+    }
+    openModal(modalDisclaimer);
+  }
+
+  function hideDisclaimerModal() {
+    closeModal(modalDisclaimer);
+  }
+
+  function triggerCrossing() {
+    if (state.isActive) return;
+    if (!isPatternAccepted(state.pattern)) {
+      showDisclaimerModal();
+    } else {
+      startCrossing();
+    }
+  }
+
   // --- Event Listeners ---
 
   // Trigger Button
   btnTrigger.addEventListener('click', () => {
-    startCrossing();
+    triggerCrossing();
   });
 
   // Triple-tap anywhere on strobe surface to stop (prevents accidental dismissals)
@@ -525,10 +837,16 @@
       if (state.isActive) {
         stopCrossing();
       } else {
-        startCrossing();
+        triggerCrossing();
       }
-    } else if (e.code === 'Escape' && state.isActive) {
-      stopCrossing();
+    } else if (e.code === 'Escape') {
+      if (state.isActive) {
+        stopCrossing();
+      } else if (modalDisclaimer && modalDisclaimer.classList.contains('active')) {
+        hideDisclaimerModal();
+      } else if (modalWhatsNew && modalWhatsNew.classList.contains('active')) {
+        closeModal(modalWhatsNew);
+      }
     }
   });
 
@@ -764,24 +1082,92 @@
     modal.classList.add('hidden');
   }
 
-  btnInfo.addEventListener('click', () => openModal(modalInfo));
-  btnCloseInfo.addEventListener('click', () => closeModal(modalInfo));
-  btnGotIt.addEventListener('click', () => closeModal(modalInfo));
+  if (btnInfo) btnInfo.addEventListener('click', () => openModal(modalInfo));
+  if (btnCloseInfo) btnCloseInfo.addEventListener('click', () => closeModal(modalInfo));
+  if (btnGotIt) btnGotIt.addEventListener('click', () => closeModal(modalInfo));
 
-  btnShare.addEventListener('click', () => {
-    renderQrCode();
-    openModal(modalShare);
-  });
-  btnCloseShare.addEventListener('click', () => closeModal(modalShare));
-
-  [modalInfo, modalShare].forEach((modal) => {
-    modal.querySelector('.modal-backdrop').addEventListener('click', () => {
-      closeModal(modal);
+  if (btnShare) {
+    btnShare.addEventListener('click', () => {
+      renderQrCode();
+      openModal(modalShare);
     });
+  }
+  if (btnCloseShare) btnCloseShare.addEventListener('click', () => closeModal(modalShare));
+
+  [modalInfo, modalShare, modalDisclaimer, modalWhatsNew].forEach((modal) => {
+    if (!modal) return;
+    const backdrop = modal.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', () => {
+        closeModal(modal);
+      });
+    }
   });
+
+  // Disclaimer Modal Actions
+  if (btnAcceptCurrent) {
+    btnAcceptCurrent.addEventListener('click', () => {
+      saveDisclaimerAcceptance(state.pattern, 'current');
+      hideDisclaimerModal();
+      startCrossing();
+    });
+  }
+
+  if (btnAcceptAll) {
+    btnAcceptAll.addEventListener('click', () => {
+      saveDisclaimerAcceptance(state.pattern, 'all');
+      hideDisclaimerModal();
+      startCrossing();
+    });
+  }
+
+  if (btnDisclaimerCancel) {
+    btnDisclaimerCancel.addEventListener('click', () => {
+      hideDisclaimerModal();
+    });
+  }
+
+  if (btnCloseDisclaimer) {
+    btnCloseDisclaimer.addEventListener('click', () => {
+      hideDisclaimerModal();
+    });
+  }
+
+  // "What's New" & Update Banner Actions
+  if (btnOpenWhatsNew) {
+    btnOpenWhatsNew.addEventListener('click', () => {
+      closeModal(modalInfo);
+      openWhatsNewModal();
+    });
+  }
+
+  if (btnCloseWhatsNew) {
+    btnCloseWhatsNew.addEventListener('click', () => {
+      closeModal(modalWhatsNew);
+    });
+  }
+
+  if (btnCloseWhatsNewFooter) {
+    btnCloseWhatsNewFooter.addEventListener('click', () => {
+      closeModal(modalWhatsNew);
+    });
+  }
+
+  if (btnSeeWhatsNew) {
+    btnSeeWhatsNew.addEventListener('click', () => {
+      if (elUpdateBanner) elUpdateBanner.classList.add('hidden');
+      openWhatsNewModal();
+    });
+  }
+
+  if (btnDismissUpdate) {
+    btnDismissUpdate.addEventListener('click', () => {
+      if (elUpdateBanner) elUpdateBanner.classList.add('hidden');
+    });
+  }
 
   // Native Web Share API
-  btnNativeShare.addEventListener('click', async () => {
+  if (btnNativeShare) btnNativeShare.addEventListener('click', async () => {
     const shareData = {
       title: 'CrossSafe - Offline Road Crossing Assist',
       text: 'Pedestrian emergency flashing light to cross roads safely offline.',
@@ -807,7 +1193,7 @@
     });
   }
 
-  btnCopyLink.addEventListener('click', copyLinkToClipboard);
+  if (btnCopyLink) btnCopyLink.addEventListener('click', copyLinkToClipboard);
 
   // --- Offline Minimalist QR Code Generator (Pure JS, Zero CDN) ---
   // Simple Type 3 QR Generator for standalone offline use
@@ -915,6 +1301,129 @@
 
     return matrix;
   }
+
+  // --- "What's New" Modal & Update Banner Initialization ---
+  function renderWhatsNewContent() {
+    if (!elWhatsNewBody) return;
+    elWhatsNewBody.innerHTML = APP_RELEASES.map((rel) => {
+      const badge = rel.isLatest ? `<span class="badge-version">v${rel.version} (Current)</span>` : `<span class="badge-version">v${rel.version}</span>`;
+      const items = rel.highlights.map(h => `<li>${h}</li>`).join('');
+      return `
+        <div class="release-card ${rel.isLatest ? 'latest' : ''}">
+          <div class="release-header">
+            ${badge}
+            <span class="release-date">${rel.date}</span>
+          </div>
+          <ul class="release-list">
+            ${items}
+          </ul>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openWhatsNewModal() {
+    renderWhatsNewContent();
+    openModal(modalWhatsNew);
+  }
+
+  function initVersionAndUpdateBanner() {
+    try {
+      const lastSeen = localStorage.getItem(VERSION_STORAGE_KEY);
+      if (!lastSeen) {
+        localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      } else if (lastSeen !== APP_VERSION) {
+        if (elUpdateBanner) {
+          elUpdateBanner.classList.remove('hidden');
+        }
+        localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      }
+    } catch (_) {}
+  }
+
+  initVersionAndUpdateBanner();
+
+  // --- CrossSafe Audit API (Accessible in Console for Legal / Verification) ---
+  window.CrossSafeAudit = {
+    exportLogs: function() {
+      let disclaimers = [];
+      let invocations = [];
+      try {
+        const d = localStorage.getItem(DISCLAIMER_AUDIT_LOG_KEY);
+        if (d) disclaimers = JSON.parse(d);
+      } catch (_) {}
+      try {
+        const inv = localStorage.getItem(INVOCATIONS_AUDIT_LOG_KEY);
+        if (inv) invocations = JSON.parse(inv);
+      } catch (_) {}
+
+      return {
+        exportedAt: new Date().toISOString(),
+        retentionWindowDays: 60,
+        appVersion: APP_VERSION,
+        disclaimerAcceptances: Array.isArray(disclaimers) ? disclaimers : [],
+        crossingInvocations: Array.isArray(invocations) ? invocations : []
+      };
+    },
+
+    verifyIntegrity: function() {
+      const logs = this.exportLogs();
+      const results = {
+        disclaimers: { total: logs.disclaimerAcceptances.length, valid: true, errors: [] },
+        invocations: { total: logs.crossingInvocations.length, valid: true, errors: [] }
+      };
+
+      // Verify disclaimers chain
+      let prevHash = GENESIS_HASH;
+      logs.disclaimerAcceptances.forEach((e, idx) => {
+        if (idx === 0 && e.prevHash !== GENESIS_HASH) {
+          results.disclaimers.valid = false;
+          results.disclaimers.errors.push(`Record #1 prevHash is not genesis`);
+        } else if (idx > 0 && e.prevHash !== prevHash) {
+          results.disclaimers.valid = false;
+          results.disclaimers.errors.push(`Record #${idx + 1} prevHash mismatch`);
+        }
+        const payload = `${e.prevHash}|${e.index}|${e.timestamp}|${e.pattern}|${e.scope}`;
+        const calculated = sha256Sync(payload);
+        if (e.hash !== calculated) {
+          results.disclaimers.valid = false;
+          results.disclaimers.errors.push(`Record #${idx + 1} hash mismatch (tampered content)`);
+        }
+        prevHash = e.hash;
+      });
+
+      // Verify invocations chain
+      prevHash = GENESIS_HASH;
+      logs.crossingInvocations.forEach((e, idx) => {
+        if (idx === 0 && e.prevHash !== GENESIS_HASH) {
+          results.invocations.valid = false;
+          results.invocations.errors.push(`Record #1 prevHash is not genesis`);
+        } else if (idx > 0 && e.prevHash !== prevHash) {
+          results.invocations.valid = false;
+          results.invocations.errors.push(`Record #${idx + 1} prevHash mismatch`);
+        }
+        const payload = `${e.prevHash}|${e.index}|${e.startTimestamp}|${e.stopTimestamp}|${e.durationSeconds}|${e.pattern}|${e.speed}|${e.textOverlay}|${e.soundEnabled}|${e.orientation}`;
+        const calculated = sha256Sync(payload);
+        if (e.hash !== calculated) {
+          results.invocations.valid = false;
+          results.invocations.errors.push(`Record #${idx + 1} hash mismatch (tampered content)`);
+        }
+        prevHash = e.hash;
+      });
+
+      return results;
+    },
+
+    clearLogs: function() {
+      try {
+        localStorage.removeItem(DISCLAIMER_AUDIT_LOG_KEY);
+        localStorage.removeItem(INVOCATIONS_AUDIT_LOG_KEY);
+        return 'Logs cleared successfully';
+      } catch (err) {
+        return err.message;
+      }
+    }
+  };
 
   // --- Service Worker Registration (100% Offline Support) ---
   if ('serviceWorker' in navigator) {

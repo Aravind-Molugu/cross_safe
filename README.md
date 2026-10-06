@@ -25,6 +25,10 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
 * **Screen Wake Lock API**: Prevents your phone screen from dimming or sleeping while crossing.
 * **Tactile Haptic Feedback**: Periodic subtle vibration pulses confirm the strobe is flashing while holding the screen faced towards oncoming cars.
 * **Web Audio Alert**: Synthesized audio chirps alert drivers without downloading any sound files.
+* **Regional Flashing Light Notice (4-Hour Window)**: Per-tile safety disclaimer requiring user acknowledgment before activating high-intensity or emergency strobe lights. Offers 3 choices: *Accept for Current Pattern* (valid 4 hours for that tile), *Accept for All Patterns* (valid 4 hours across all tiles), or *Cancel*.
+* **60-Day Tamper-Evident Audit Logging**: Cryptographically secured (SHA-256 offline hash chain) client-side audit logs capturing user disclaimer acceptances and invocation records (start, stop, duration, pattern, speed, text overlay, sound, and orientation). Holds up to 60 days of history for legal/defensive auditing, with zero server overhead.
+* **In-App Update Banner & "What's New" Modal**: Subtle, dismissible banner alerting returning users to new features upon app version bump, paired with an accessible **What's New** release history modal inside the Info dialog.
+* **Continuous Changelog Governance**: Strict Keep a Changelog (`CHANGELOG.md`) tracking, excluded from Service Worker caching for zero app bloat.
 * **Text Overlay**: Optional large high-contrast **"CROSSING"**, **"STOP"**, or custom message badge.
 * **Standalone Portable Edition**: Includes `crosssafe.html`—a single, zero-dependency file you can send via WhatsApp or AirDrop.
 
@@ -34,9 +38,10 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
 
 ```
 road_cross_assist/
+├── CHANGELOG.md          # Version history & release notes (Keep a Changelog)
 ├── index.html            # Main PWA pedestrian dashboard
 ├── styles.css            # Dark UI & hardware-accelerated strobe styles
-├── app.js                # Timing loop, Wake Lock, Audio synthesizer, Haptics
+├── app.js                # Timing loop, Wake Lock, Audio synthesizer, Haptics, Audit Engine
 ├── sw.js                 # Service Worker (100% offline cache-first strategy)
 ├── manifest.webmanifest  # PWA manifest for "Add to Home Screen"
 ├── icons/                # App icons (SVG, 192x192 PNG, 512x512 PNG)
@@ -71,6 +76,19 @@ Before committing or deploying, run the instant unit testing suite locally:
 * **In-Browser Visual Test Runner**:
   Double-click `tests/runner.html` in File Explorer or navigate to `http://localhost:8080/tests/runner.html` to run 15+ interactive behavioral tests directly in Chrome/Edge with live visual reporting.
 * **GitHub Actions CI**: Every `git push` automatically runs tests in the cloud via `.github/workflows/test.yml` before deploying to GitHub Pages.
+
+### 4. Inspect & Verify 60-Day Audit Logs in Browser Console
+Open Developer Tools (`F12` $\rightarrow$ **Console**) to inspect or audit local device records:
+```javascript
+// Export 60-day disclaimer acceptances and crossing invocation records
+CrossSafeAudit.exportLogs();
+
+// Cryptographically verify SHA-256 hash-chain integrity
+CrossSafeAudit.verifyIntegrity();
+
+// Clear local audit records if needed
+CrossSafeAudit.clearLogs();
+```
 
 *(See [TESTING_GUIDE.md](TESTING_GUIDE.md) for full details)*
 
