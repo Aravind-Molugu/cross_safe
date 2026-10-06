@@ -12,6 +12,7 @@ import json
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def read_file(relative_path):
+    """Read a project file relative to the repository root."""
     full_path = os.path.join(BASE_DIR, relative_path)
     with open(full_path, "r", encoding="utf-8") as f:
         return f.read()
@@ -85,6 +86,7 @@ class TestDomIdIntegrity(unittest.TestCase):
     """Verifies that all DOM elements queried by app.js exist in index.html and crosssafe.html."""
 
     def test_app_js_elements_exist_in_index_html(self):
+        """Ensure app.js only reads DOM ids present in index.html."""
         app_js = read_file("app.js")
         index_html = read_file("index.html")
 
@@ -96,6 +98,7 @@ class TestDomIdIntegrity(unittest.TestCase):
             self.assertIsNotNone(re.search(pattern, index_html), f"DOM element '#{el_id}' queried in app.js is missing from index.html")
 
     def test_crosssafe_html_self_contained_dom(self):
+        """Embedded script must use only DOM ids that exist in crosssafe.html."""
         crosssafe_html = read_file("crosssafe.html")
         script_match = re.search(r"<script>(.*?)</script>", crosssafe_html, re.DOTALL)
         self.assertIsNotNone(script_match, "Embedded script not found in crosssafe.html")
@@ -252,6 +255,123 @@ class TestGitHubActionsCI(unittest.TestCase):
         self.assertIn("dev", workflow, "Workflow must target dev branch")
         self.assertIn("test_crosssafe.py", workflow, "Workflow must run Python test suite")
         self.assertIn("unit.test.js", workflow, "Workflow must run Node.js test suite")
+
+
+class TestVersionAndChangelog(unittest.TestCase):
+    """Verifies Item #11 version alignment, CHANGELOG.md standards, and zero-bloat caching."""
+
+    def test_version_alignment_across_all_files(self):
+        """package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md must all align on 1.9.0."""
+        pkg = json.loads(read_file("package.json"))
+        app_js = read_file("app.js")
+        crosssafe = read_file("crosssafe.html")
+        sw_js = read_file("sw.js")
+        changelog = read_file("CHANGELOG.md")
+
+        self.assertEqual(pkg.get("version"), "1.9.0", "package.json version must be 1.9.0")
+        self.assertIn("APP_VERSION = '1.9.0'", app_js, "app.js must declare APP_VERSION = '1.9.0'")
+        self.assertIn("APP_VERSION = '1.9.0'", crosssafe, "crosssafe.html must declare APP_VERSION = '1.9.0'")
+        self.assertIn("crosssafe-v1.9.0", sw_js, "sw.js CACHE_NAME must contain crosssafe-v1.9.0")
+        self.assertIn("## [1.9.0]", changelog, "CHANGELOG.md must contain entry for 1.9.0")
+
+    def test_changelog_structure_and_standards(self):
+        """CHANGELOG.md must follow Keep a Changelog standard format."""
+        changelog = read_file("CHANGELOG.md")
+        self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "CHANGELOG.md")), "CHANGELOG.md must exist in root")
+        self.assertIn("# Changelog", changelog)
+        self.assertIn("Keep a Changelog", changelog)
+        self.assertIn("## [1.9.0]", changelog)
+        self.assertIn("## [1.8.0]", changelog)
+        self.assertIn("## [1.7.0]", changelog)
+
+    def test_changelog_excluded_from_service_worker_cache(self):
+        """Zero-bloat guarantee: CHANGELOG.md must never be cached in sw.js."""
+        sw_js = read_file("sw.js")
+        self.assertNotIn("CHANGELOG", sw_js)
+        self.assertNotIn("changelog", sw_js)
+
+
+class TestRegionalDisclaimerModal(unittest.TestCase):
+    """Verifies Item #10: Regional Flashing Light Disclaimer & 60-Day Audit Logging."""
+
+    def setUp(self):
+        self.index_html = read_file("index.html")
+        self.crosssafe = read_file("crosssafe.html")
+        self.app_js = read_file("app.js")
+
+    def test_disclaimer_elements_in_html(self):
+        """Disclaimer modal elements must exist in index.html and crosssafe.html."""
+        elements = [
+            "modal-disclaimer",
+            "modal-disclaimer-title",
+            "btn-close-disclaimer",
+            "disclaimer-pattern-pill",
+            "btn-accept-current",
+            "btn-accept-all",
+            "btn-disclaimer-cancel"
+        ]
+        for el in elements:
+            pattern = rf'id=["\']?{re.escape(el)}["\']?'
+            self.assertIsNotNone(re.search(pattern, self.index_html), f"Missing #{el} in index.html")
+            self.assertIsNotNone(re.search(pattern, self.crosssafe), f"Missing #{el} in crosssafe.html")
+
+    def test_disclaimer_storage_keys_and_time_windows(self):
+        """4-hour validity window and 60-day audit retention constants must be defined."""
+        for code in [self.app_js, self.crosssafe]:
+            self.assertIn("FOUR_HOURS_MS = 4 * 60 * 60 * 1000", code)
+            self.assertIn("SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000", code)
+            self.assertIn("DISCLAIMER_STORAGE_KEY = 'crosssafe_disclaimer_v1'", code)
+            self.assertIn("DISCLAIMER_AUDIT_LOG_KEY = 'crosssafe_disclaimer_audit_log'", code)
+            self.assertIn("INVOCATIONS_AUDIT_LOG_KEY = 'crosssafe_invocations_audit_log'", code)
+
+    def test_sha256_and_audit_api_presence(self):
+        """Synchronous offline SHA-256 and window.CrossSafeAudit API must exist."""
+        for code in [self.app_js, self.crosssafe]:
+            self.assertIn("function sha256Sync(ascii)", code)
+            self.assertIn("window.CrossSafeAudit", code)
+            self.assertIn("exportLogs", code)
+            self.assertIn("verifyIntegrity", code)
+            self.assertIn("clearLogs", code)
+            self.assertIn("function triggerCrossing()", code)
+
+
+class TestWhatsNewAndVersionBanner(unittest.TestCase):
+    """Verifies Item #11: In-App Update Banner and 'What's New' Modal."""
+
+    def setUp(self):
+        self.index_html = read_file("index.html")
+        self.crosssafe = read_file("crosssafe.html")
+        self.app_js = read_file("app.js")
+
+    def test_update_banner_elements_in_html(self):
+        """Update banner elements must exist in index.html and crosssafe.html."""
+        elements = ["update-banner", "btn-see-whats-new", "btn-dismiss-update"]
+        for el in elements:
+            pattern = rf'id=["\']?{re.escape(el)}["\']?'
+            self.assertIsNotNone(re.search(pattern, self.index_html), f"Missing #{el} in index.html")
+            self.assertIsNotNone(re.search(pattern, self.crosssafe), f"Missing #{el} in crosssafe.html")
+
+    def test_whats_new_modal_elements_in_html(self):
+        """What's New modal elements must exist in index.html and crosssafe.html."""
+        elements = [
+            "modal-whats-new",
+            "modal-whats-new-title",
+            "btn-close-whats-new",
+            "whats-new-body",
+            "btn-close-whats-new-footer",
+            "btn-open-whats-new"
+        ]
+        for el in elements:
+            pattern = rf'id=["\']?{re.escape(el)}["\']?'
+            self.assertIsNotNone(re.search(pattern, self.index_html), f"Missing #{el} in index.html")
+            self.assertIsNotNone(re.search(pattern, self.crosssafe), f"Missing #{el} in crosssafe.html")
+
+    def test_app_releases_data_populated(self):
+        """APP_RELEASES array must contain latest release metadata."""
+        for code in [self.app_js, self.crosssafe]:
+            self.assertIn("const APP_RELEASES = [", code)
+            self.assertIn("version: '1.9.0'", code)
+            self.assertIn("isLatest: true", code)
 
 
 if __name__ == "__main__":

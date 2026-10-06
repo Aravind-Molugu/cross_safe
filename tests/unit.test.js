@@ -183,4 +183,105 @@ describe('GitHub Actions CI Workflow Integrity', () => {
   });
 });
 
+describe('Version Alignment & CHANGELOG.md (Item #11)', () => {
+  const pkg = JSON.parse(getFileContent('package.json'));
+  const sw = getFileContent('sw.js');
+  const appJs = getFileContent('app.js');
+  const crosssafe = getFileContent('crosssafe.html');
+  const changelog = getFileContent('CHANGELOG.md');
+
+  test('Version 1.9.0 aligns across package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md', () => {
+    assert.strictEqual(pkg.version, '1.9.0');
+    assert.ok(sw.includes('crosssafe-v1.9.0'));
+    assert.ok(appJs.includes("APP_VERSION = '1.9.0'"));
+    assert.ok(crosssafe.includes("APP_VERSION = '1.9.0'"));
+    assert.ok(changelog.includes('## [1.9.0]'));
+  });
+
+  test('CHANGELOG.md adheres to Keep a Changelog standard format', () => {
+    assert.ok(changelog.includes('# Changelog'));
+    assert.ok(changelog.includes('Keep a Changelog'));
+    assert.ok(changelog.includes('## [1.9.0]'));
+    assert.ok(changelog.includes('## [1.8.0]'));
+    assert.ok(changelog.includes('## [1.7.0]'));
+  });
+
+  test('Zero-Bloat: CHANGELOG.md is never cached by sw.js', () => {
+    assert.strictEqual(sw.toLowerCase().includes('changelog'), false);
+  });
+});
+
+describe('Regional Disclaimer & 60-Day Audit Logging (Item #10)', () => {
+  const indexHtml = getFileContent('index.html');
+  const crosssafe = getFileContent('crosssafe.html');
+  const appJs = getFileContent('app.js');
+
+  test('Disclaimer modal elements exist in index.html and crosssafe.html', () => {
+    const ids = [
+      'modal-disclaimer',
+      'btn-close-disclaimer',
+      'btn-accept-current',
+      'btn-accept-all',
+      'btn-disclaimer-cancel',
+      'disclaimer-pattern-pill'
+    ];
+    for (const id of ids) {
+      assert.ok(indexHtml.includes(`id="${id}"`), `Missing #${id} in index.html`);
+      assert.ok(crosssafe.includes(`id="${id}"`), `Missing #${id} in crosssafe.html`);
+    }
+  });
+
+  test('4-hour validity and 60-day audit constants are defined', () => {
+    for (const code of [appJs, crosssafe]) {
+      assert.ok(code.includes('FOUR_HOURS_MS = 4 * 60 * 60 * 1000'));
+      assert.ok(code.includes('SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000'));
+      assert.ok(code.includes("DISCLAIMER_STORAGE_KEY = 'crosssafe_disclaimer_v1'"));
+      assert.ok(code.includes("DISCLAIMER_AUDIT_LOG_KEY = 'crosssafe_disclaimer_audit_log'"));
+      assert.ok(code.includes("INVOCATIONS_AUDIT_LOG_KEY = 'crosssafe_invocations_audit_log'"));
+    }
+  });
+
+  test('SHA-256 sync hash chaining and CrossSafeAudit API exist', () => {
+    for (const code of [appJs, crosssafe]) {
+      assert.ok(code.includes('function sha256Sync(ascii)'));
+      assert.ok(code.includes('window.CrossSafeAudit'));
+      assert.ok(code.includes('exportLogs'));
+      assert.ok(code.includes('verifyIntegrity'));
+      assert.ok(code.includes('clearLogs'));
+    }
+  });
+});
+
+describe('What\'s New Modal & Update Banner (Item #11)', () => {
+  const indexHtml = getFileContent('index.html');
+  const crosssafe = getFileContent('crosssafe.html');
+  const appJs = getFileContent('app.js');
+
+  test('Update banner and What\'s New modal elements exist in markup', () => {
+    const ids = [
+      'update-banner',
+      'btn-see-whats-new',
+      'btn-dismiss-update',
+      'modal-whats-new',
+      'btn-close-whats-new',
+      'whats-new-body',
+      'btn-close-whats-new-footer',
+      'btn-open-whats-new'
+    ];
+    for (const id of ids) {
+      assert.ok(indexHtml.includes(`id="${id}"`), `Missing #${id} in index.html`);
+      assert.ok(crosssafe.includes(`id="${id}"`), `Missing #${id} in crosssafe.html`);
+    }
+  });
+
+  test('APP_RELEASES contains structured release notes', () => {
+    for (const code of [appJs, crosssafe]) {
+      assert.ok(code.includes('const APP_RELEASES = ['));
+      assert.ok(code.includes("version: '1.9.0'"));
+      assert.ok(code.includes('isLatest: true'));
+    }
+  });
+});
+
+
 

@@ -114,6 +114,17 @@
       </div>
     </header>
 
+    <!-- Update Notification Banner (Item #11) -->
+    <div id="update-banner" class="update-banner hidden" role="region" aria-label="Version update notification">
+      <div class="update-banner-content">
+        <span class="update-banner-text">
+          🚀 <strong>CrossSafe updated to v1.9.0</strong>
+        </span>
+        <button id="btn-see-whats-new" class="btn-banner-action">See What's New</button>
+        <button id="btn-dismiss-update" class="btn-banner-dismiss" aria-label="Dismiss banner">&times;</button>
+      </div>
+    </div>
+
     <!-- Status Banner -->
     <div class="status-bar">
       <span class="badge badge-offline" id="badge-offline">
@@ -198,7 +209,7 @@
       <div class="options-grid">
         <!-- Speed Setting -->
         <div class="option-group option-group-full">
-          <label class="option-label" for="speed-select">Strobe Speed</label>
+          <label class="option-label" for="speed-control">Strobe Speed</label>
           <div class="segmented-control speed-segmented" id="speed-control">
             <button class="segment-btn" data-speed="ultraslow">Ultra Slow</button>
             <button class="segment-btn" data-speed="veryslow">Very Slow</button>
@@ -301,6 +312,10 @@
           <div class="instruction-block note-box">
             <p><strong>Safety Note</strong>: Hold your phone firmly at chest height facing oncoming vehicles so drivers see the strobe from afar. Always look both ways before stepping onto the roadway.</p>
           </div>
+
+          <div style="margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; text-align: center;">
+            <button id="btn-open-whats-new" class="btn-secondary" style="width: 100%;">📜 Version History & What's New</button>
+          </div>
         </div>
         <div class="modal-footer">
           <button id="btn-got-it" class="btn-primary">Got it</button>
@@ -332,6 +347,51 @@
             </button>
             <button id="btn-copy-link" class="btn-secondary">Copy Link</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regional Flashing Light Disclaimer Modal (Item #10) -->
+    <div id="modal-disclaimer" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-disclaimer-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-disclaimer-title">⚠️ Regional Light Notice</h3>
+          <button id="btn-close-disclaimer" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body disclaimer-body">
+          <div class="disclaimer-notice-box">
+            <p><strong>Notice:</strong> Emergency colors and high-frequency strobes may be restricted or regulated for civilian/pedestrian use in certain jurisdictions.</p>
+            <div id="disclaimer-pattern-pill" class="disclaimer-pattern-pill">Pattern: Police Strobe</div>
+          </div>
+          <p class="disclaimer-text">
+            By continuing, you acknowledge responsibility for compliance with local road safety laws and assume all responsibility for use.
+          </p>
+          <div class="disclaimer-validity-note">
+            ℹ️ Your acceptance is saved on this device and remains valid for 4 hours.
+          </div>
+          <div class="disclaimer-actions">
+            <button id="btn-accept-current" class="btn-accept-current">Accept for Current Pattern</button>
+            <button id="btn-accept-all" class="btn-accept-all">Accept for All Patterns (4 Hours)</button>
+            <button id="btn-disclaimer-cancel" class="btn-disclaimer-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- "What's New" Release Notes Modal (Item #11) -->
+    <div id="modal-whats-new" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-whats-new-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-whats-new-title">What's New in CrossSafe</h3>
+          <button id="btn-close-whats-new" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body whats-new-body" id="whats-new-body">
+          <!-- Dynamically populated from APP_RELEASES -->
+        </div>
+        <div class="modal-footer">
+          <button id="btn-close-whats-new-footer" class="btn-primary">Got it</button>
         </div>
       </div>
     </div>

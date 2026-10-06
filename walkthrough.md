@@ -110,6 +110,39 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 - **GitHub Actions CI Gatekeeper**:
   - [.github/workflows/test.yml](file:///c:/Users/moluguaravind\road_cross_assist/.github/workflows/test.yml): Runs automatically on every push or pull request to `main` and `dev` branches, preventing buggy code from ever deploying.
 
+### Regional Flashing Light Notice & 60-Day Tamper-Evident Audit Logging (Item #10)
+- **Problem Solved**: Certain jurisdictions restrict civilian display of emergency vehicle colors (especially red/blue strobes) or limit high-frequency flashing. Because CrossSafe works 100% offline without GPS or tracking, a user-facing compliance acknowledgement shields the developer from liability. Furthermore, in legal scenarios, pedestrians can prove they utilized an authorized slow cadence rather than a rapid strobe.
+- **4-Hour Pattern Acceptance Window**:
+  - Tapping START with an unaccepted or expired pattern intercepts execution and renders the disclaimer dialog displaying the selected pattern name.
+  - Three convenient thumb-friendly actions:
+    1. **Accept for Current Pattern**: Grants a 4-hour exemption for the active pattern, logs acceptance, and activates the strobe immediately.
+    2. **Accept for All Patterns**: Grants a 4-hour exemption across all patterns, logs acceptance, and activates the strobe immediately.
+    3. **Cancel**: Closes the dialog without flashing and without recording acceptance.
+  - Repeated activations of an accepted pattern within 4 hours launch instantly with zero pop-up.
+- **60-Day Tamper-Evident Rolling Audit Log**:
+  - Automatically records every crossing invocation: `startTimestamp`, `stopTimestamp`, `durationSeconds`, `pattern`, `speed`, `textOverlay`, `soundEnabled`, `orientation`.
+  - Cryptographically chained using synchronous pure-JS offline **SHA-256 hash chaining** (`prevHash` linked to prior record; genesis hash anchor).
+  - Automatically prunes records older than 60 days on launch and upon each new record.
+- **Zero UI Bloat / Developer Console Extraction**:
+  - Programmatic API accessible directly from the browser console:
+    - `window.CrossSafeAudit.exportLogs()`: Extracts both disclaimer acceptances and crossing invocations in structured JSON.
+    - `window.CrossSafeAudit.verifyIntegrity()`: Cryptographically re-hashes and validates the entire 60-day chain, returning validation status and pinpointing any tampered records.
+    - `window.CrossSafeAudit.clearLogs()`: Resets logs when needed.
+
+### In-App Version Update Banner, "What's New" Modal & CHANGELOG.md (Item #11)
+- **Problem Solved**: Offline-first PWAs update transparently in the background via Service Worker revalidation, often leaving returning users unaware of newly released features or critical enhancements.
+- **Subtle Update Notification Banner**:
+  - App compares current version against `localStorage.getItem('crosssafe_last_seen_version')`.
+  - First-time installs: Banner is completely suppressed to ensure a clean first-run experience.
+  - Returning users upgrading to an update: Displays a sleek, non-intrusive banner (`🚀 CrossSafe updated to v1.9.0`) with `[See What's New]` and `[×]` dismiss buttons.
+  - Dismissing or clicking the button updates `crosssafe_last_seen_version`, permanently hiding the banner for that version.
+- **"What's New" Release Notes Modal**:
+  - Features prominent highlight cards for the latest release, recent release history, and a link to the complete GitHub `CHANGELOG.md`.
+  - On-demand permanent access via the new button inside the Info & Help modal: *"📜 Version History & What's New"*.
+- **Continuous CHANGELOG.md Governance**:
+  - Full Keep a Changelog documentation established at the repository root covering v1.0.0 through v1.9.0.
+  - Zero-bloat: Strictly excluded from Service Worker caching (`ASSETS_TO_CACHE`).
+
 ---
 
 ## Verification Results
