@@ -29,6 +29,7 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
 * **60-Day Tamper-Evident Audit Logging**: Cryptographically secured (SHA-256 offline hash chain) client-side audit logs capturing user disclaimer acceptances and invocation records (start, stop, duration, pattern, speed, text overlay, sound, and orientation). Holds up to 60 days of history for legal/defensive auditing, with zero server overhead.
 * **In-App Update Banner & "What's New" Modal**: Subtle, dismissible banner alerting returning users to new features upon app version bump, paired with an accessible **What's New** release history modal inside the Info dialog.
 * **Continuous Changelog Governance**: Strict Keep a Changelog (`CHANGELOG.md`) tracking, excluded from Service Worker caching for zero app bloat.
+* **AI Search & SEO Optimization**: Features `robots.txt`, `sitemap.xml`, `llms.txt`, Open Graph sharing cards, and Schema.org JSON-LD structured data (`WebApplication` and `FAQPage`) for seamless discovery across AI assistants (ChatGPT, Perplexity, Gemini, Copilot) and search engines.
 * **Text Overlay**: Optional large high-contrast **"CROSSING"**, **"STOP"**, or custom message badge.
 * **Standalone Portable Edition**: Includes `crosssafe.html`—a single, zero-dependency file you can send via WhatsApp or AirDrop.
 
@@ -39,11 +40,15 @@ Once loaded or saved, **it requires zero cellular data, zero Wi-Fi, and no app s
 ```
 road_cross_assist/
 ├── CHANGELOG.md          # Version history & release notes (Keep a Changelog)
-├── index.html            # Main PWA pedestrian dashboard
+├── index.html            # Main PWA pedestrian dashboard (with JSON-LD & Open Graph)
 ├── styles.css            # Dark UI & hardware-accelerated strobe styles
 ├── app.js                # Timing loop, Wake Lock, Audio synthesizer, Haptics, Audit Engine
 ├── sw.js                 # Service Worker (100% offline cache-first strategy)
 ├── manifest.webmanifest  # PWA manifest for "Add to Home Screen"
+├── robots.txt            # Search and AI crawler permissions
+├── sitemap.xml           # Canonical XML sitemap for search engines
+├── llms.txt              # Standardized markdown overview for AI context windows
+├── llms-full.txt         # Detailed technical specification for AI search engines
 ├── icons/                # App icons (SVG, 192x192 PNG, 512x512 PNG)
 ├── crosssafe.html        # Standalone single-file edition (WhatsApp/AirDrop ready)
 ├── TESTING_GUIDE.md      # Step-by-step testing instructions for your laptop & phone

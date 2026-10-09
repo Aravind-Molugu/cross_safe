@@ -261,18 +261,18 @@ class TestVersionAndChangelog(unittest.TestCase):
     """Verifies Item #11 version alignment, CHANGELOG.md standards, and zero-bloat caching."""
 
     def test_version_alignment_across_all_files(self):
-        """package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md must all align on 1.9.0."""
+        """package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md must all align on 1.9.1."""
         pkg = json.loads(read_file("package.json"))
         app_js = read_file("app.js")
         crosssafe = read_file("crosssafe.html")
         sw_js = read_file("sw.js")
         changelog = read_file("CHANGELOG.md")
 
-        self.assertEqual(pkg.get("version"), "1.9.0", "package.json version must be 1.9.0")
-        self.assertIn("APP_VERSION = '1.9.0'", app_js, "app.js must declare APP_VERSION = '1.9.0'")
-        self.assertIn("APP_VERSION = '1.9.0'", crosssafe, "crosssafe.html must declare APP_VERSION = '1.9.0'")
-        self.assertIn("crosssafe-v1.9.0", sw_js, "sw.js CACHE_NAME must contain crosssafe-v1.9.0")
-        self.assertIn("## [1.9.0]", changelog, "CHANGELOG.md must contain entry for 1.9.0")
+        self.assertEqual(pkg.get("version"), "1.9.1", "package.json version must be 1.9.1")
+        self.assertIn("APP_VERSION = '1.9.1'", app_js, "app.js must declare APP_VERSION = '1.9.1'")
+        self.assertIn("APP_VERSION = '1.9.1'", crosssafe, "crosssafe.html must declare APP_VERSION = '1.9.1'")
+        self.assertIn("crosssafe-v1.9.1", sw_js, "sw.js CACHE_NAME must contain crosssafe-v1.9.1")
+        self.assertIn("## [1.9.1]", changelog, "CHANGELOG.md must contain entry for 1.9.1")
 
     def test_changelog_structure_and_standards(self):
         """CHANGELOG.md must follow Keep a Changelog standard format."""
@@ -280,6 +280,7 @@ class TestVersionAndChangelog(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "CHANGELOG.md")), "CHANGELOG.md must exist in root")
         self.assertIn("# Changelog", changelog)
         self.assertIn("Keep a Changelog", changelog)
+        self.assertIn("## [1.9.1]", changelog)
         self.assertIn("## [1.9.0]", changelog)
         self.assertIn("## [1.8.0]", changelog)
         self.assertIn("## [1.7.0]", changelog)
@@ -370,7 +371,7 @@ class TestWhatsNewAndVersionBanner(unittest.TestCase):
         """APP_RELEASES array must contain latest release metadata."""
         for code in [self.app_js, self.crosssafe]:
             self.assertIn("const APP_RELEASES = [", code)
-            self.assertIn("version: '1.9.0'", code)
+            self.assertIn("version: '1.9.1'", code)
             self.assertIn("isLatest: true", code)
 
 
@@ -430,6 +431,67 @@ class TestThemeAlignmentAndButtonPolish(unittest.TestCase):
         for code in [self.styles_css, self.crosssafe]:
             self.assertIn(".btn-secondary:hover", code)
             self.assertIn("border-color: var(--accent-cyan);", code)
+
+
+class TestSeoAndGeoDiscovery(unittest.TestCase):
+    """Verifies Item #13: SEO, Generative Engine Optimization (GEO) & Machine Readability."""
+
+    def setUp(self):
+        self.index_html = read_file("index.html")
+        self.crosssafe = read_file("crosssafe.html")
+        self.styles_css = read_file("styles.css")
+        self.robots_txt = read_file("robots.txt")
+        self.sitemap_xml = read_file("sitemap.xml")
+        self.llms_txt = read_file("llms.txt")
+        self.llms_full_txt = read_file("llms-full.txt")
+
+    def test_robots_txt_rules(self):
+        """robots.txt must exist and permit general and AI crawlers with sitemap."""
+        self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "robots.txt")))
+        self.assertIn("User-agent: *", self.robots_txt)
+        self.assertIn("User-agent: GPTBot", self.robots_txt)
+        self.assertIn("User-agent: PerplexityBot", self.robots_txt)
+        self.assertIn("User-agent: ClaudeBot", self.robots_txt)
+        self.assertIn("User-agent: Google-Extended", self.robots_txt)
+        self.assertIn("Sitemap: https://aravind-molugu.github.io/cross_safe/sitemap.xml", self.robots_txt)
+
+    def test_sitemap_xml_validity(self):
+        """sitemap.xml must declare canonical URL."""
+        self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "sitemap.xml")))
+        self.assertIn("<loc>https://aravind-molugu.github.io/cross_safe/</loc>", self.sitemap_xml)
+        self.assertIn("<priority>1.0</priority>", self.sitemap_xml)
+
+    def test_llms_txt_files(self):
+        """llms.txt and llms-full.txt must provide clean markdown documentation for AI agents."""
+        self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "llms.txt")))
+        self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "llms-full.txt")))
+        self.assertIn("# CrossSafe", self.llms_txt)
+        self.assertIn("https://aravind-molugu.github.io/cross_safe/", self.llms_txt)
+        self.assertIn("Police Strobe", self.llms_full_txt)
+        self.assertIn("Dual Amber Wig-Wag", self.llms_full_txt)
+
+    def test_html_meta_tags_and_canonical(self):
+        """index.html and crosssafe.html must contain canonical URL, Open Graph, and Twitter tags."""
+        for code in [self.index_html, self.crosssafe]:
+            self.assertIn('rel="canonical"', code)
+            self.assertIn('https://aravind-molugu.github.io/cross_safe/', code)
+            self.assertIn('property="og:title"', code)
+            self.assertIn('property="og:description"', code)
+            self.assertIn('name="twitter:card"', code)
+
+    def test_json_ld_structured_data(self):
+        """JSON-LD scripts must be present and contain WebApplication and FAQPage schemas."""
+        for code in [self.index_html, self.crosssafe]:
+            self.assertIn('application/ld+json', code)
+            self.assertIn('"WebApplication"', code)
+            self.assertIn('"FAQPage"', code)
+
+    def test_crawlable_overview_section_and_sr_only(self):
+        """Accessible semantic section must exist and .sr-only styling must be defined."""
+        self.assertIn('id="about-crosssafe"', self.index_html)
+        self.assertIn('id="about-crosssafe"', self.crosssafe)
+        for code in [self.styles_css, self.crosssafe]:
+            self.assertIn('.sr-only', code)
 
 
 if __name__ == "__main__":

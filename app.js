@@ -6,7 +6,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.9.0';
+  const APP_VERSION = '1.9.1';
   const VERSION_STORAGE_KEY = 'crosssafe_last_seen_version';
   const DISCLAIMER_STORAGE_KEY = 'crosssafe_disclaimer_v1';
   const DISCLAIMER_AUDIT_LOG_KEY = 'crosssafe_disclaimer_audit_log';
@@ -26,9 +26,18 @@
 
   const APP_RELEASES = [
     {
-      version: '1.9.0',
+      version: '1.9.1',
       date: 'October 2026',
       isLatest: true,
+      highlights: [
+        '<strong>AI & Search Engine Optimization (SEO/GEO)</strong>: Enhanced discoverability across AI assistants (ChatGPT, Perplexity, Gemini, Copilot) with Schema.org JSON-LD, Open Graph, sitemap, and llms.txt integration.',
+        '<strong>Dual-Tier Versioning</strong>: Adopted structured SemVer policy differentiating major feature releases from minor enhancements and fixes.'
+      ]
+    },
+    {
+      version: '1.9.0',
+      date: 'October 2026',
+      isLatest: false,
       highlights: [
         '<strong>Regional Flashing Light Notice</strong>: Added a 4-hour safety disclaimer dialog before activating emergency strobes, ensuring local regulatory compliance.',
         '<strong>60-Day Tamper-Evident Audit Logging</strong>: Automatically records crossing duration, speed, pattern, and disclaimer acceptances using offline SHA-256 hash chaining.',

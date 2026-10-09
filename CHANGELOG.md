@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.1] - 2026-10-09
+
+### Added
+- **AI Search & Generative Engine Optimization (GEO)**:
+  - **`robots.txt`**: Declared crawl permissions for standard web crawlers and modern AI agents (`GPTBot`, `ChatGPT-User`, `Google-Extended`, `PerplexityBot`, `ClaudeBot`, `cohere-ai`, `anthropic-ai`) with canonical sitemap integration.
+  - **`sitemap.xml`**: Defined canonical deployment URL for search indexing.
+  - **`llms.txt` & `llms-full.txt`**: Implemented standard markdown documentation for AI assistants, providing structured context on features, safety cadences, and pedestrian use cases.
+  - **Schema.org JSON-LD**: Embedded `WebApplication` and `FAQPage` structured data graphs providing rich machine-readable metadata.
+  - **Social Sharing Cards**: Added comprehensive Open Graph (`og:*`) and Twitter card tags with high-res icon assets.
+  - **Semantic Crawlable Overview**: Added accessible, screen-reader and crawler-friendly `<section id="about-crosssafe">` ensuring non-JS scrapers can extract full feature and safety context.
+- **Dual-Tier Versioning Policy**: Codified SemVer increment rules distinguishing major functional capability releases (`0.1.0` bump resetting patch) from minor refinements/fixes (`0.0.1` bump).
+
+---
+
 ## [1.9.0] - 2026-10-06
 
 ### Added

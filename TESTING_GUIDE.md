@@ -140,5 +140,9 @@ npm test
 | **Animated Pattern Previews** | Selector tiles display live CSS keyframe micro-animations: Police Strobe quad-flashes red then blue; Split Alternating flashes left-red then right-blue with divider; Full Screen Flip alternates solid colors; Wig-Wag alternates circular beacons; White Beacon pulses high-lumen flare | [ ] |
 | **Session Settings Persistence** | App retains pattern, speed, preset/custom text, audio, vibration, brightness hint, and orientation settings across page refreshes and browser restarts via `crosssafe_settings_v1` | [ ] |
 | **Option C Clean Viewport Strobe** | Tapping START triggers strobe immediately with zero Android OS security toasts or pop-ups; stopping strobe returns to dashboard cleanly with zero viewport flash | [ ] |
-| **Automated Unit Tests** | `python tests/test_crosssafe.py`, `unit.test.js`, and `tests/runner.html` pass with 100% success rate and zero failures (18/18 tests) | [ ] |
+| **Regional Notice & 60-Day Audit** | 4-hour validity window prevents repetitive prompts; 60-day rolling log cryptographically seals invocations with offline SHA-256 hash chaining | [ ] |
+| **Update Banner & Release Notes** | Update banner appears when a new version is detected and opens What's New modal; permanent access via Info dialog | [ ] |
+| **Theme Alignment & Polish** | Button hierarchies match dark neon palette (cyan primary, dark outlined card secondary, ghost cancel, 30x30px circular dismiss) | [ ] |
+| **AI Search & SEO/GEO Discovery** | `robots.txt`, `sitemap.xml`, and `llms.txt` present; Open Graph, Twitter cards, and Schema.org JSON-LD `WebApplication` & `FAQPage` validate cleanly | [ ] |
+| **Automated Unit Tests** | `python tests/test_crosssafe.py` passes 100% with all 37 test assertions green | [ ] |
 

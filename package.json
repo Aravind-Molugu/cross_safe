@@ -1,13 +1,27 @@
 {
   "name": "crosssafe",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "private": true,
   "description": "Offline-First Road Crossing Assist PWA",
   "scripts": {
     "test": "node --test tests/unit.test.js",
     "test:py": "python tests/test_crosssafe.py"
   },
-  "keywords": ["pwa", "safety", "strobe", "pedestrian"],
+  "keywords": [
+    "pwa",
+    "safety",
+    "strobe",
+    "pedestrian",
+    "crosswalk",
+    "emergency-light",
+    "hazard-beacon",
+    "offline-first",
+    "road-crossing",
+    "road-safety",
+    "strobe-lights",
+    "sos",
+    "amber-lights"
+  ],
   "author": "Aravind Molugu",
   "license": "MIT"
 }

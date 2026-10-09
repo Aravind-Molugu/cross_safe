@@ -7,8 +7,103 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CrossSafe">
-  <meta name="description" content="Offline-first road crossing assistant with high-visibility emergency strobe hazard lights.">
-  <title>CrossSafe - Road Crossing Assist</title>
+  
+  <title>CrossSafe - Pedestrian Road Crossing Safety Strobe & Hazard Beacon</title>
+  <meta name="description" content="Free offline-first pedestrian road crossing assistant. Flash high-visibility emergency strobes, amber hazard wig-wags, and custom text overlays on iPhone & Android with zero internet.">
+  <meta name="keywords" content="pedestrian safety, road crossing assist, emergency strobe, crosswalk flasher, night walking safety, pwa, offline safety app, hazard light, flashing beacon">
+  <meta name="author" content="Aravind Molugu">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://aravind-molugu.github.io/cross_safe/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CrossSafe">
+  <meta property="og:url" content="https://aravind-molugu.github.io/cross_safe/">
+  <meta property="og:title" content="CrossSafe - Pedestrian Road Crossing Safety Strobe & Hazard Beacon">
+  <meta property="og:description" content="Free offline-first pedestrian road crossing assistant. Flash high-visibility emergency strobes, amber hazard wig-wags, and custom text overlays on iPhone & Android with zero internet.">
+  <meta property="og:image" content="https://aravind-molugu.github.io/cross_safe/icons/icon-512.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://aravind-molugu.github.io/cross_safe/">
+  <meta name="twitter:title" content="CrossSafe - Pedestrian Road Crossing Safety Strobe">
+  <meta name="twitter:description" content="Free offline-first pedestrian road crossing assistant. Flash high-visibility emergency strobes and warning lights with zero data.">
+  <meta name="twitter:image" content="https://aravind-molugu.github.io/cross_safe/icons/icon-512.png">
+
+  <!-- Schema.org JSON-LD (Search Engines & Generative AI Crawlers) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://aravind-molugu.github.io/cross_safe/#webapp",
+        "name": "CrossSafe",
+        "url": "https://aravind-molugu.github.io/cross_safe/",
+        "applicationCategory": "SafetyApplication",
+        "operatingSystem": "All (iOS, Android, Windows, macOS, Linux)",
+        "browserRequirements": "Requires HTML5 Canvas, Web Audio API, Service Worker",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Free, offline-first pedestrian road crossing assistant with high-visibility emergency strobe hazard lights, multi-speed cadence controls, and night road safety features.",
+        "featureList": [
+          "100% Offline Progressive Web App",
+          "Police, Split, Wig-Wag, Fullscreen, and SOS Morse Strobe Patterns",
+          "Custom High-Contrast Text Overlays",
+          "Audio Crosswalk Chirps and Haptic Feedback",
+          "Screen Wake Lock and Hardware Orientation Lock",
+          "Accidental Exit Prevention via Triple-Tap to Stop",
+          "Tamper-Evident 60-Day Local Invocations Audit Log"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "Aravind Molugu"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://aravind-molugu.github.io/cross_safe/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is CrossSafe?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "CrossSafe is an offline-first pedestrian safety web app that transforms your smartphone into a high-visibility emergency flashing beacon to help you cross dark roads and crosswalks safely."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does CrossSafe work without internet or cellular data?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. CrossSafe is built as a Progressive Web App (PWA) with complete offline caching. Once opened, it functions 100% offline with zero network connectivity."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I stop the flashing light once started?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "To prevent accidental stops from brushing clothes or hands while walking, CrossSafe requires a deliberate triple-tap anywhere on the screen within 800 milliseconds, or pressing Spacebar/Escape on a keyboard."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is CrossSafe free and does it collect my personal data?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "CrossSafe is 100% free with no ads, no tracking, and zero telemetry. All settings and audit records remain strictly on your local device."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
@@ -395,6 +490,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Semantic Crawlable Overview for Screen Readers and Search Indexers (SEO/GEO) -->
+    <section id="about-crosssafe" class="sr-only" aria-label="About CrossSafe">
+      <h2>About CrossSafe Road Crossing Assistant</h2>
+      <p>CrossSafe is a free, privacy-focused Progressive Web App designed to safeguard pedestrians, night runners, dog walkers, and cyclists when crossing roadways in low-light conditions. CrossSafe transforms your smartphone display into an emergency beacon with high-visibility multi-pulse light strobes, custom text alerts, and haptic feedback.</p>
+      
+      <h3>Emergency Strobe Modes & Hazards</h3>
+      <ul>
+        <li><strong>Police Strobe</strong>: Alternating red and blue multi-burst flashes for high-urgency conspicuity.</li>
+        <li><strong>Split Alternating</strong>: Dual-color split screen alternating warning flash.</li>
+        <li><strong>Full Screen Flip</strong>: Whole-screen alternating color flip for reflective roadway illumination.</li>
+        <li><strong>Dual Amber Wig-Wag</strong>: Circular amber beacon pods emulating school bus and municipal crosswalk hazard flashers.</li>
+        <li><strong>White Beacon</strong>: High-lumen pulsing white light for spotlighting and walking visibility.</li>
+        <li><strong>SOS Morse Distress</strong>: International optical and audible Morse code distress signaling.</li>
+      </ul>
+
+      <h3>100% Offline & Zero Telemetry</h3>
+      <p>CrossSafe operates completely offline with no cellular data required. It has no advertisements, no tracking cookies, and collects zero personal analytics. All settings and local audit records stay strictly on your device.</p>
+    </section>
   </main>
 
   <script src="app.js"></script>
