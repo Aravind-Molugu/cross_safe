@@ -1,0 +1,49 @@
+# CrossSafe - Complete Technical & Feature Specification
+
+## Identity & Purpose
+- **Application Name**: CrossSafe
+- **Tagline**: Offline-First Pedestrian Road Crossing Assistant
+- **Live URL**: https://aravind-molugu.github.io/cross_safe/
+- **Repository**: https://github.com/Aravind-Molugu/cross_safe
+- **License**: MIT
+- **Architecture**: Progressive Web App (PWA) + Zero-Dependency Standalone Edition (`crosssafe.html`)
+- **Author**: Aravind Molugu
+
+## Problem Solved
+Over 75% of pedestrian vehicular fatalities occur in darkness, dusk, or low-light conditions. Standard smartphone flashlights point in a single narrow direction and lack the flashing optical signature drivers instantly recognize. CrossSafe turns the large display surface of any smartphone into a multi-pulse emergency hazard beacon, dramatically increasing pedestrian conspicuity from hundreds of meters away.
+
+## Core Capabilities
+
+### 1. Strobe Timing Engine & Light Patterns
+- **Police Strobe**: High-intensity triple-pulse red burst followed by a triple-pulse blue burst. Ideal for maximum visibility in dark, rainy, or foggy conditions.
+- **Split Alternating**: Dual split screen (left half red, right half blue) alternating left and right, emulating emergency vehicle lightbars.
+- **Full Screen Flip**: Rapid whole-screen alternating flash between solid red and blue for wide-area reflective illumination.
+- **Dual Amber Wig-Wag**: Twin circular amber beacon pods emulating construction hazard beacons, school bus flashers, and municipal crosswalk signals.
+- **White Beacon**: Rhythmic high-lumen pulsing white flare suitable for pedestrian spotlighting, dog walking, or vehicle breakdown alerts.
+- **SOS Morse Distress**: International optical and audible Morse code distress pattern (`··· ——— ···`) for emergencies.
+
+### 2. Cadence & Speed Controls
+- **Ultra Slow (3.5x multiplier, ~0.5 Hz)**: Gentle rhythmic beacon for calm, steady visibility.
+- **Very Slow (2.2x multiplier, ~1.0 Hz)**: Measured alternating warning cadence.
+- **Slow (1.4x multiplier, ~1.5 Hz)**: Relaxed strobe pacing.
+- **Normal (1.0x multiplier, ~4.0 Hz)**: Default high-visibility crossing cadence.
+- **Rapid (0.65x multiplier, ~8.0 Hz)**: High-urgency emergency vehicle flash.
+
+### 3. Safety, Usability & Anti-Friction Features
+- **Triple-Tap to Stop**: To prevent accidental cancellations from brushing clothing, pockets, or nervous finger taps, stopping requires 3 deliberate taps within an 800ms window, supported by haptic pulses and visual pill countdown. Pressing Spacebar or Escape stops instantly on desktop.
+- **Zero Fullscreen Pop-ups**: Full viewport coverage is handled purely through CSS layout (`position: fixed; inset: 0`), avoiding Android OS full-screen permission prompts and viewport resize flashes.
+- **Screen Wake Lock API**: Automatically requests a system wake lock so the phone screen never dims or turns off while crossing.
+- **Hardware Orientation Lock**: 1-tap in-app toggle switches between Portrait and Landscape with native API locking on Android and a hardware-accelerated 90° virtual CSS transform fallback on iOS Safari.
+- **High-Contrast Text Overlay**: Displays customizable text (e.g., 'PEDESTRIAN CROSSING', 'STOP', or up to 15 custom characters) across the active flasher.
+- **Web Audio Alert Chirps**: Synthesizes audible crosswalk beeps using the HTML5 Web Audio API without requiring downloaded MP3 files.
+- **Haptic Vibration API**: Periodically buzzes the phone to confirm to the user that the flasher is actively firing while pointed toward traffic.
+
+### 4. Regulatory Compliance & Tamper-Evident Audit Logging
+- **Regional Light Notice**: Requires user acknowledgment regarding regional traffic laws on emergency strobe colors. Acceptance is saved locally on the device and holds valid for 4 hours.
+- **60-Day Rolling Audit Log**: Automatically logs all crossing invocations (pattern, speed, duration, timestamps) locally with offline SHA-256 hash chaining. Older entries prune after 60 days. Allows pedestrians to prove they utilized an acceptable slow flashing frequency if questioned by authorities.
+- **Zero Cloud Dependencies**: 100% offline. Zero tracking, zero telemetry, zero analytics.
+
+## Installation & Offline Instructions
+- **iPhone / iPad (Safari)**: Open https://aravind-molugu.github.io/cross_safe/ $ightarrow$ Tap Share $ightarrow$ Tap 'Add to Home Screen'.
+- **Android (Chrome / Edge)**: Open https://aravind-molugu.github.io/cross_safe/ $ightarrow$ Tap Menu (three dots) $ightarrow$ Tap 'Install app' or 'Add to Home screen'.
+- **Standalone Single File**: Download `crosssafe.html` (~32 KB) to run offline directly by double-clicking without an internet connection or web server.

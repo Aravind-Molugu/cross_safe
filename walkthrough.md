@@ -155,6 +155,16 @@ The **CrossSafe** road crossing assist app has been built and verified. It is an
 - **Version History Button**: Outlined card button with cyan border glow on hover matching the app's dark neon aesthetic.
 - **Standalone Parity**: 100% synchronized into single-file edition (`crosssafe.html`).
 
+### Search Engine Optimization (SEO) & Generative Engine Optimization (GEO) (Item #13)
+- **Problem Solved**: As a client-side PWA, search engines and AI assistants (ChatGPT Search, Perplexity, Gemini, Copilot) had no crawl entrypoints, sitemaps, or structured data to discover, understand, and cite CrossSafe when users ask for pedestrian road crossing safety tools.
+- **AI-Friendly Crawler Entrypoint (`robots.txt`)**: Explicitly welcomes AI crawlers (`GPTBot`, `ChatGPT-User`, `Google-Extended`, `PerplexityBot`, `ClaudeBot`, `cohere-ai`, `anthropic-ai`) and standard bots with sitemap link.
+- **Canonical Sitemaps (`sitemap.xml`)**: Declares `https://aravind-molugu.github.io/cross_safe/` for automated indexing.
+- **AI Documentation Standards (`llms.txt` & `llms-full.txt`)**: Provides plain-text markdown specifications optimized for LLM context windows and search engines.
+- **Schema.org JSON-LD Structured Data**: Embedded `WebApplication` and `FAQPage` graphs enabling rich snippet results and AI question-answering.
+- **Social Sharing Cards**: Full Open Graph (`og:*`) and Twitter card tags with 512x512 PNG visuals.
+- **Semantic Crawlable Section**: Accessible, screen-reader-friendly `<section id="about-crosssafe" class="sr-only">` detailing all strobe modes and offline capabilities for non-JavaScript crawlers.
+- **Dual-Tier SemVer Alignment**: Codified SemVer increment policy (major functional releases bump `0.1.0` resetting patch; minor enhancements/fixes bump `0.0.1`), advancing the version from `v1.9.0` to `v1.9.1`.
+
 ---
 
 ## Verification Results

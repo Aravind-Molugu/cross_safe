@@ -1,0 +1,34 @@
+# robots.txt for CrossSafe (https://aravind-molugu.github.io/cross_safe/)
+# Standard Web Crawlers & AI/LLM Search Agents
+
+User-agent: *
+Allow: /
+
+# OpenAI / ChatGPT
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Google Gemini / Vertex AI
+User-agent: Google-Extended
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Anthropic Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+
+# Canonical Sitemap
+Sitemap: https://aravind-molugu.github.io/cross_safe/sitemap.xml
