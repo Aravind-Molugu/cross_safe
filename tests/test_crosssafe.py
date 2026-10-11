@@ -471,13 +471,14 @@ class TestSeoAndGeoDiscovery(unittest.TestCase):
         self.assertIn("Dual Amber Wig-Wag", self.llms_full_txt)
 
     def test_html_meta_tags_and_canonical(self):
-        """index.html and crosssafe.html must contain canonical URL, Open Graph, and Twitter tags."""
+        """index.html and crosssafe.html must contain canonical URL, Open Graph, Twitter, and Bing tags."""
         for code in [self.index_html, self.crosssafe]:
             self.assertIn('rel="canonical"', code)
             self.assertIn('https://aravind-molugu.github.io/cross_safe/', code)
             self.assertIn('property="og:title"', code)
             self.assertIn('property="og:description"', code)
             self.assertIn('name="twitter:card"', code)
+            self.assertIn('name="msvalidate.01"', code)
 
     def test_json_ld_structured_data(self):
         """JSON-LD scripts must be present and contain WebApplication and FAQPage schemas."""
