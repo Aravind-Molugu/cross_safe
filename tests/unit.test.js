@@ -190,17 +190,19 @@ describe('Version Alignment & CHANGELOG.md (Item #11)', () => {
   const crosssafe = getFileContent('crosssafe.html');
   const changelog = getFileContent('CHANGELOG.md');
 
-  test('Version 1.9.0 aligns across package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md', () => {
-    assert.strictEqual(pkg.version, '1.9.0');
-    assert.ok(sw.includes('crosssafe-v1.9.0'));
-    assert.ok(appJs.includes("APP_VERSION = '1.9.0'"));
-    assert.ok(crosssafe.includes("APP_VERSION = '1.9.0'"));
-    assert.ok(changelog.includes('## [1.9.0]'));
+  test('Version 1.9.2 aligns across package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md', () => {
+    assert.strictEqual(pkg.version, '1.9.2');
+    assert.ok(sw.includes('crosssafe-v1.9.2'));
+    assert.ok(appJs.includes("APP_VERSION = '1.9.2'"));
+    assert.ok(crosssafe.includes("APP_VERSION = '1.9.2'"));
+    assert.ok(changelog.includes('## [1.9.2]'));
   });
 
   test('CHANGELOG.md adheres to Keep a Changelog standard format', () => {
     assert.ok(changelog.includes('# Changelog'));
     assert.ok(changelog.includes('Keep a Changelog'));
+    assert.ok(changelog.includes('## [1.9.2]'));
+    assert.ok(changelog.includes('## [1.9.1]'));
     assert.ok(changelog.includes('## [1.9.0]'));
     assert.ok(changelog.includes('## [1.8.0]'));
     assert.ok(changelog.includes('## [1.7.0]'));
@@ -277,7 +279,7 @@ describe('What\'s New Modal & Update Banner (Item #11)', () => {
   test('APP_RELEASES contains structured release notes', () => {
     for (const code of [appJs, crosssafe]) {
       assert.ok(code.includes('const APP_RELEASES = ['));
-      assert.ok(code.includes("version: '1.9.0'"));
+      assert.ok(code.includes("version: '1.9.2'"));
       assert.ok(code.includes('isLatest: true'));
     }
   });

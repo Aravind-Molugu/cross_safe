@@ -566,7 +566,7 @@
       it('Suppresses banner on fresh installation', () => {
         let bannerShown = false;
         const lastSeen = null; // First visit
-        if (lastSeen && lastSeen !== '1.9.0') {
+        if (lastSeen && lastSeen !== '1.9.2') {
           bannerShown = true;
         }
         assert.equal(bannerShown, false);
@@ -575,7 +575,7 @@
       it('Displays update banner when upgrading from previous version', () => {
         let bannerShown = false;
         const lastSeen = '1.8.0'; // Upgrade
-        if (lastSeen && lastSeen !== '1.9.0') {
+        if (lastSeen && lastSeen !== '1.9.2') {
           bannerShown = true;
         }
         assert.equal(bannerShown, true);
