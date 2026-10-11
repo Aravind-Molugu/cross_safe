@@ -1,6 +1,6 @@
 {
   "name": "crosssafe",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "private": true,
   "description": "Offline-First Road Crossing Assist PWA",
   "scripts": {

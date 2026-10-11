@@ -144,5 +144,6 @@ npm test
 | **Update Banner & Release Notes** | Update banner appears when a new version is detected and opens What's New modal; permanent access via Info dialog | [ ] |
 | **Theme Alignment & Polish** | Button hierarchies match dark neon palette (cyan primary, dark outlined card secondary, ghost cancel, 30x30px circular dismiss) | [ ] |
 | **AI Search & SEO/GEO Discovery** | `robots.txt`, `sitemap.xml`, and `llms.txt` present; Open Graph, Twitter cards, and Schema.org JSON-LD `WebApplication` & `FAQPage` validate cleanly | [ ] |
-| **Automated Unit Tests** | `python tests/test_crosssafe.py` passes 100% with all 37 test assertions green | [ ] |
+| **Share Modal ISO-18004 QR Code** | Tapping Share button displays embedded vector QR SVG instantly with 0 ms lag; scanning with iOS Camera or Android Google Lens immediately resolves to `https://aravind-molugu.github.io/cross_safe/` | [ ] |
+| **Automated Unit Tests** | `python tests/test_crosssafe.py` passes 100% with all 39 test assertions green | [ ] |
 

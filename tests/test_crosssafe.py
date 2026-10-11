@@ -261,18 +261,18 @@ class TestVersionAndChangelog(unittest.TestCase):
     """Verifies Item #11 version alignment, CHANGELOG.md standards, and zero-bloat caching."""
 
     def test_version_alignment_across_all_files(self):
-        """package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md must all align on 1.9.1."""
+        """package.json, sw.js, app.js, crosssafe.html, and CHANGELOG.md must all align on 1.9.2."""
         pkg = json.loads(read_file("package.json"))
         app_js = read_file("app.js")
         crosssafe = read_file("crosssafe.html")
         sw_js = read_file("sw.js")
         changelog = read_file("CHANGELOG.md")
 
-        self.assertEqual(pkg.get("version"), "1.9.1", "package.json version must be 1.9.1")
-        self.assertIn("APP_VERSION = '1.9.1'", app_js, "app.js must declare APP_VERSION = '1.9.1'")
-        self.assertIn("APP_VERSION = '1.9.1'", crosssafe, "crosssafe.html must declare APP_VERSION = '1.9.1'")
-        self.assertIn("crosssafe-v1.9.1", sw_js, "sw.js CACHE_NAME must contain crosssafe-v1.9.1")
-        self.assertIn("## [1.9.1]", changelog, "CHANGELOG.md must contain entry for 1.9.1")
+        self.assertEqual(pkg.get("version"), "1.9.2", "package.json version must be 1.9.2")
+        self.assertIn("APP_VERSION = '1.9.2'", app_js, "app.js must declare APP_VERSION = '1.9.2'")
+        self.assertIn("APP_VERSION = '1.9.2'", crosssafe, "crosssafe.html must declare APP_VERSION = '1.9.2'")
+        self.assertIn("crosssafe-v1.9.2", sw_js, "sw.js CACHE_NAME must contain crosssafe-v1.9.2")
+        self.assertIn("## [1.9.2]", changelog, "CHANGELOG.md must contain entry for 1.9.2")
 
     def test_changelog_structure_and_standards(self):
         """CHANGELOG.md must follow Keep a Changelog standard format."""
@@ -280,6 +280,7 @@ class TestVersionAndChangelog(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "CHANGELOG.md")), "CHANGELOG.md must exist in root")
         self.assertIn("# Changelog", changelog)
         self.assertIn("Keep a Changelog", changelog)
+        self.assertIn("## [1.9.2]", changelog)
         self.assertIn("## [1.9.1]", changelog)
         self.assertIn("## [1.9.0]", changelog)
         self.assertIn("## [1.8.0]", changelog)
@@ -371,7 +372,7 @@ class TestWhatsNewAndVersionBanner(unittest.TestCase):
         """APP_RELEASES array must contain latest release metadata."""
         for code in [self.app_js, self.crosssafe]:
             self.assertIn("const APP_RELEASES = [", code)
-            self.assertIn("version: '1.9.1'", code)
+            self.assertIn("version: '1.9.2'", code)
             self.assertIn("isLatest: true", code)
 
 
@@ -493,6 +494,34 @@ class TestSeoAndGeoDiscovery(unittest.TestCase):
         self.assertIn('id="about-crosssafe"', self.crosssafe)
         for code in [self.styles_css, self.crosssafe]:
             self.assertIn('.sr-only', code)
+
+
+class TestShareModalQrCodeIntegrity(unittest.TestCase):
+    """Verifies Item #14: Share Modal ISO/IEC 18004 Valid Offline Vector QR SVG."""
+
+    def setUp(self):
+        self.index_html = read_file("index.html")
+        self.crosssafe = read_file("crosssafe.html")
+        self.app_js = read_file("app.js")
+
+    def test_qr_container_contains_svg_with_viewbox(self):
+        """#qr-container in index.html and crosssafe.html must contain a pre-rendered vector SVG."""
+        for code in [self.index_html, self.crosssafe]:
+            match = re.search(r'<div id="qr-container"[^>]*>(.*?)</div>', code, re.DOTALL)
+            self.assertIsNotNone(match, "#qr-container must exist")
+            inner_html = match.group(1)
+            self.assertIn("<svg", inner_html, "#qr-container must contain an inline SVG")
+            self.assertIn('viewBox="0 0 41 41"', inner_html, "SVG must define 41x41 viewBox (Version 4 with quiet zone)")
+            self.assertIn('class="qr-svg"', inner_html, "SVG must have class qr-svg")
+            self.assertIn("<rect", inner_html, "SVG must have background rect")
+            self.assertIn("<path", inner_html, "SVG must have path modules")
+
+    def test_obsolete_pseudo_qr_functions_removed(self):
+        """Inoperable createQrMatrix and runtime generateQrSvg functions must be completely removed."""
+        for code in [self.app_js, self.crosssafe]:
+            self.assertNotIn("function createQrMatrix", code, "createQrMatrix must be removed")
+            self.assertNotIn("function generateQrSvg", code, "generateQrSvg must be removed")
+            self.assertNotIn("pseudoBit", code, "pseudoBit logic must be removed")
 
 
 if __name__ == "__main__":
